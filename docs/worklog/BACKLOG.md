@@ -12,12 +12,12 @@
 
 ## Phase 1 — 백엔드 뼈대 (로컬)
 
-- [ ] docker-compose.yml 작성 (FastAPI + PostgreSQL 16, TECH_DESIGN §1)
-- [ ] backend 폴더 구조 생성 (TECH_DESIGN §5) + FastAPI 엔트리 + ruff 설정
-- [ ] Alembic 초기화 + 전체 스키마 마이그레이션 (TECH_DESIGN §2, pg_trgm 확장 포함)
-- [ ] 시드: 관리자 1 + 사용자 1 + settings 싱글턴 행
-- [ ] 인증: POST /auth/login (JWT), GET /me (TECH_DESIGN §3)
-- [ ] 하루 경계 헬퍼: settings.day_boundary_time 기반 "논리적 오늘" 계산 (모든 날짜 판정의 단일 지점)
+- [x] docker-compose.yml 작성 (FastAPI + PostgreSQL 16, TECH_DESIGN §1) — 2026-07-03 (호스트 포트 충돌로 db 5434, api 8001)
+- [x] backend 폴더 구조 생성 (TECH_DESIGN §5) + FastAPI 엔트리 + ruff 설정 — 2026-07-03
+- [x] Alembic 초기화 + 전체 스키마 마이그레이션 (TECH_DESIGN §2, pg_trgm 확장 포함) — 2026-07-03 (12테이블, 부분 유니크/트라이그램 인덱스, 왕복 검증)
+- [x] 시드: 관리자 1 + 사용자 1 + settings 싱글턴 행 — 2026-07-03 (app/seed.py 멱등, bcrypt. settings는 마이그레이션에서 생성)
+- [x] 인증: POST /auth/login (JWT), GET /me (TECH_DESIGN §3) — 2026-07-03 (bcrypt 직접 사용, HTTPBearer 의존성, e2e 검증)
+- [x] 하루 경계 헬퍼: settings.day_boundary_time 기반 "논리적 오늘" 계산 (모든 날짜 판정의 단일 지점) — 2026-07-03 (services/day_boundary.py, 단위 테스트 7)
 - [ ] TODO 조회/정렬 API: GET /todos, PATCH /todos/reorder
 - [ ] 관리자 TODO CRUD: POST/PATCH/DELETE /admin/todos
 - [ ] ★ 토글 서비스: 토글 ON (TECH_DESIGN §4.1) — 미션 +5, 완주 +10, 연속 +10×(N−1), daily_bonus_log
