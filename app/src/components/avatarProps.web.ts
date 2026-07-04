@@ -126,32 +126,32 @@ export const PROPS: Record<string, PropDef> = {
   crown: {
     bone: 'head',
     build: () =>
-      at(g(M.cylinder(0.072, 0.078, 0.04, C.gold), at(M.cone(0.016, 0.035, C.gold), -0.05, 0.035, 0), at(M.cone(0.016, 0.035, C.gold), 0, 0.04, 0.05), at(M.cone(0.016, 0.035, C.gold), 0.05, 0.035, 0), at(M.cone(0.016, 0.035, C.gold), 0, 0.04, -0.05), at(M.sphere(0.012, C.red), 0, 0.01, 0.075)), 0, 0.165, 0),
+      at(g(M.cylinder(0.085, 0.092, 0.05, C.gold, { emissive: 0xcfa32e, emissiveIntensity: 0.35 }), at(M.cone(0.016, 0.035, C.gold), -0.05, 0.035, 0), at(M.cone(0.016, 0.035, C.gold), 0, 0.04, 0.05), at(M.cone(0.016, 0.035, C.gold), 0.05, 0.035, 0), at(M.cone(0.016, 0.035, C.gold), 0, 0.04, -0.05), at(M.sphere(0.012, C.red), 0, 0.01, 0.075)), 0, 0.2, 0),
   },
   ribbon_pin: {
     bone: 'head',
     build: () =>
-      at(g(at(M.cone(0.02, 0.042, C.pink), -0.024, 0, 0, 0, 0, Math.PI / 2), at(M.cone(0.02, 0.042, C.pink), 0.024, 0, 0, 0, 0, -Math.PI / 2), M.sphere(0.011, C.softPink)), 0.098, 0.13, 0.05, 0, 0, -0.3),
+      at(g(at(M.cone(0.03, 0.06, C.pink), -0.034, 0, 0, 0, 0, Math.PI / 2), at(M.cone(0.03, 0.06, C.pink), 0.034, 0, 0, 0, 0, -Math.PI / 2), M.sphere(0.016, C.softPink)), 0.095, 0.14, 0.065, 0, 0, -0.3),
   },
   flower_pin: {
     bone: 'head',
     build: () => {
-      const petals = [0, 1, 2, 3, 4].map((i) => at(M.sphere(0.011, C.white), Math.cos((i * 2 * Math.PI) / 5) * 0.018, Math.sin((i * 2 * Math.PI) / 5) * 0.018, 0));
-      return at(g(...petals, at(M.sphere(0.01, C.yellow), 0, 0, 0.006)), -0.098, 0.13, 0.05, 0, 0, 0.3);
+      const petals = [0, 1, 2, 3, 4].map((i) => at(M.sphere(0.016, C.white), Math.cos((i * 2 * Math.PI) / 5) * 0.026, Math.sin((i * 2 * Math.PI) / 5) * 0.026, 0));
+      return at(g(...petals, at(M.sphere(0.015, C.yellow), 0, 0, 0.01)), -0.095, 0.14, 0.065, 0, 0, 0.3);
     },
   },
   // ── 목걸이 (neck) ──
   pearl_necklace: {
     bone: 'neck',
     build: () => {
-      const pearls = Array.from({ length: 12 }, (_, i) => at(M.sphere(0.0085, C.cream), Math.cos((i * 2 * Math.PI) / 12) * 0.062, -0.055 - Math.abs(Math.sin((i * Math.PI) / 12)) * 0.012, Math.sin((i * 2 * Math.PI) / 12) * 0.055 + 0.05));
+      const pearls = Array.from({ length: 11 }, (_, i) => at(M.sphere(0.014, 0xffc9dd, { emissive: 0xff8fbe, emissiveIntensity: 0.35, roughness: 0.3 }), Math.cos((i * 2 * Math.PI) / 11) * 0.062, -0.06 - Math.abs(Math.sin((i * Math.PI) / 11)) * 0.015, Math.sin((i * 2 * Math.PI) / 11) * 0.05 + 0.055));
       return g(...pearls);
     },
   },
   diamond_necklace: {
     bone: 'neck',
     build: () =>
-      g(at(M.torus(0.058, 0.0032, 0xcccccc), 0, -0.05, 0.05, Math.PI / 2.2), at(M.octa(0.015, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.4 }), 0, -0.1, 0.095)),
+      g(at(M.torus(0.06, 0.006, 0x8a8f98), 0, -0.05, 0.05, Math.PI / 2.2), at(M.octa(0.026, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.8, roughness: 0.2 }), 0, -0.11, 0.1)),
   },
   // ── 손에 드는 것 ──
   wand: {
@@ -193,15 +193,15 @@ export const PROPS: Record<string, PropDef> = {
   cape: {
     bone: 'chest',
     build: () => {
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.62, 24, 1, true), mat(C.red, { side: THREE.DoubleSide }));
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.52, 24, 1, true), mat(C.red, { side: THREE.DoubleSide }));
       cone.scale.z = 0.45;
-      return at(g(at(cone, 0, -0.18, -0.09), at(M.torus(0.045, 0.011, C.gold), 0, 0.16, 0.07, Math.PI / 2.2)), 0, 0, -0.02);
+      return at(g(at(cone, 0, -0.13, -0.08), at(M.sphere(0.032, C.red), -0.11, 0.13, -0.01), at(M.sphere(0.032, C.red), 0.11, 0.13, -0.01), at(M.torus(0.022, 0.009, C.gold, { emissive: 0xcfa32e, emissiveIntensity: 0.5 }), 0, 0.12, 0.075)), 0, 0.04, -0.02);
     },
   },
   scarf: {
     bone: 'neck',
     build: () =>
-      g(at(M.torus(0.066, 0.028, C.mint), 0, -0.04, 0.045, Math.PI / 2.1), at(M.box(0.052, 0.16, 0.026, C.mint), 0.035, -0.13, 0.105, 0, 0, 0.12)),
+      g(at(M.torus(0.066, 0.028, C.red), 0, -0.04, 0.045, Math.PI / 2.1), at(M.box(0.052, 0.16, 0.026, C.red), 0.035, -0.13, 0.105, 0, 0, 0.12)),
   },
   // ── 바닥 (world) ──
   flower_rug: {

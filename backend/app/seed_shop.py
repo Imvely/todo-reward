@@ -51,12 +51,13 @@ CATALOG: list[tuple[str, str, int, str, int]] = [
     ("hat", "밀짚모자", 30, "emoji:👒", 68),
     ("hat", "신사 모자", 55, "emoji:🎩", 68),
     ("hat", "학사모", 45, "emoji:🎓", 68),
+    ("hat", "왕관", 80, "emoji:👑", 68),
     # ── 동물 귀 (58) ──
     ("ears", "고양이 귀", 45, "emoji:🐱", 58),
     ("ears", "토끼 귀", 45, "emoji:🐰", 58),
     # ── 액세서리: 머리 옆 (65) ──
     ("accessory", "리본 머리핀", 10, "emoji:🎀", 65),
-    ("accessory", "왕관", 80, "emoji:👑", 65),
+
     ("accessory", "꽃 머리핀", 15, "emoji:🌸", 65),
     # ── 목걸이 (55) ──
     ("necklace", "진주 목걸이", 35, "emoji:📿", 55),
@@ -125,7 +126,7 @@ ASSET_REFS: dict[tuple[str, str], str] = {
     ("ears", "고양이 귀"): "prop:cat_ears",
     ("ears", "토끼 귀"): "prop:rabbit_ears",
     ("halo", "천사링"): "prop:halo",
-    ("accessory", "왕관"): "prop:crown",
+    ("hat", "왕관"): "prop:crown",
     ("accessory", "리본 머리핀"): "prop:ribbon_pin",
     ("accessory", "꽃 머리핀"): "prop:flower_pin",
     ("necklace", "진주 목걸이"): "prop:pearl_necklace",
@@ -151,9 +152,31 @@ ASSET_REFS: dict[tuple[str, str], str] = {
 }
 
 
+# 카테고리 재분류 (부위 교체 그룹 정리): (기존 category, name) → 새 category
+RECATEGORIZE: dict[tuple[str, str], str] = {
+    ("accessory", "왕관"): "hat",  # 왕관은 정수리 부위 — 모자끼리 자동 교체되도록
+}
+
+
 def seed_shop() -> None:
     db = SessionLocal()
     try:
+        # 0) 재분류 — shop_items와 옷장(user_inventory.category 비정규화)을 함께 옮긴다
+        from app.models.shop import UserInventory
+
+        for (old_cat, name), new_cat in RECATEGORIZE.items():
+            item = db.scalar(
+                select(ShopItem).where(ShopItem.category == old_cat, ShopItem.name == name)
+            )
+            if item is None:
+                continue
+            item.category = new_cat
+            for inv in db.scalars(
+                select(UserInventory).where(UserInventory.item_id == item.id)
+            ).all():
+                inv.category = new_cat
+            print(f"recategorized: {name} {old_cat} -> {new_cat}")
+
         created = 0
         for category, name, price, image_url, layer_z in CATALOG:
             exists = db.scalar(

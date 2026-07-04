@@ -39,6 +39,8 @@ const CONFLICTS: Record<string, string[]> = {
   bottom: ['dress'],
   glasses: ['sunglasses'],
   sunglasses: ['glasses'],
+  hat: ['ears'],
+  ears: ['hat'],
 };
 
 export function ShopScreen({ onBack }: { onBack: () => void }) {
@@ -178,13 +180,8 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
           <AvatarStage items={wornItems} height={264} />
         </View>
 
-        {/* 카테고리 칩 */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsRow}
-          contentContainerStyle={styles.chipsContent}
-        >
+        {/* 카테고리 칩 — 가로 스크롤은 웹에서 가려지므로 전부 줄바꿈 표시 */}
+        <View style={styles.chipsWrap}>
           {['all', ...presentCats].map((c) => {
             const active = category === c;
             return (
@@ -199,7 +196,7 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
         {/* 아이템 트레이 (스크롤 영역) */}
         <ScrollView style={styles.tray} contentContainerStyle={styles.trayContent}>
@@ -335,11 +332,15 @@ const styles = StyleSheet.create({
   walletValue: { fontFamily: font.display, fontSize: 16, color: colors.ink },
   error: { fontFamily: font.body, fontSize: 12, color: colors.danger, marginBottom: space(2) },
   stage: { borderRadius: radius.lg, overflow: 'hidden', ...shadow.card },
-  chipsRow: { flexGrow: 0, marginTop: space(3) },
-  chipsContent: { gap: space(2), paddingVertical: 2 },
+  chipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space(1.5),
+    marginTop: space(3),
+  },
   chip: {
-    paddingVertical: space(1.5),
-    paddingHorizontal: space(3.5),
+    paddingVertical: space(1),
+    paddingHorizontal: space(2.5),
     borderRadius: radius.pill,
     backgroundColor: colors.card,
     borderWidth: 1.5,

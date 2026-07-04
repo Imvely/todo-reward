@@ -120,6 +120,99 @@ function VrmModel({ items }: { items: WornItem[] }) {
   return <primitive object={vrm.scene} />;
 }
 
+/** 배경 아이템 전용 데코 — "배경 = 그라데이션 + 파티클 + 소품" 세트로 값어치 있게. */
+function EnvDecor({ envKey }: { envKey: string }) {
+  const std = (color: number, opts: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
+    new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...opts });
+
+  const decor = useMemo(() => {
+    const grp = new THREE.Group();
+    if (envKey === 'night') {
+      // 달
+      const moon = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 24, 16),
+        std(0xfff3dc, { emissive: 0xffe9b8, emissiveIntensity: 0.9 }),
+      );
+      moon.position.set(-0.72, 1.95, -1.1);
+      grp.add(moon);
+    } else if (envKey === 'space') {
+      // 고리 행성
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(0.13, 24, 16), std(0xb9a0ff, { emissive: 0x6a4fd0, emissiveIntensity: 0.5 }));
+      planet.position.set(0.72, 1.85, -1.2);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 10, 40), std(0xffd34d, { emissive: 0xcfa32e, emissiveIntensity: 0.5 }));
+      ring.position.copy(planet.position);
+      ring.rotation.x = Math.PI / 2.6;
+      grp.add(planet, ring);
+    } else if (envKey === 'xmas') {
+      // 트리 (3단 콘 + 별)
+      const tree = new THREE.Group();
+      const green = 0x2f9e5f;
+      [
+        [0.3, 0.34, 0.34],
+        [0.24, 0.3, 0.6],
+        [0.17, 0.26, 0.84],
+      ].forEach(([r, h, y]) => {
+        const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 20), std(green));
+        c.position.y = y;
+        tree.add(c);
+      });
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.2, 12), std(0xb9825a));
+      trunk.position.y = 0.1;
+      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), std(0xffd34d, { emissive: 0xcfa32e, emissiveIntensity: 0.8 }));
+      star.position.y = 1.03;
+      tree.add(trunk, star);
+      tree.position.set(-0.8, 0, -0.9);
+      grp.add(tree);
+    } else if (envKey === 'rainbow') {
+      // 무지개 아치 (반원 토러스 3겹)
+      [0xff8fa9, 0xffdf6b, 0x8fe3c0].forEach((color, i) => {
+        const arc = new THREE.Mesh(new THREE.TorusGeometry(1.05 + i * 0.09, 0.035, 10, 48, Math.PI), std(color, { emissive: color, emissiveIntensity: 0.25 }));
+        arc.position.set(0, 0.25, -1.3);
+        grp.add(arc);
+      });
+    } else if (envKey === 'ocean') {
+      // 물빛 바닥
+      const water = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.3, 1.3, 0.01, 40),
+        std(0x9ad8ff, { transparent: true, opacity: 0.45, roughness: 0.2 }),
+      );
+      water.position.y = 0.004;
+      grp.add(water);
+    }
+    return grp;
+  }, [envKey]);
+
+  return (
+    <>
+      <primitive object={decor} />
+      {envKey === 'sakura' ? (
+        <>
+          <Sparkles count={70} scale={[2.4, 2.2, 1.6]} position={[0, 1.2, -0.3]} size={6} speed={0.25} color="#FFAFCB" />
+          <Sparkles count={30} scale={[2, 2, 1.2]} position={[0, 1.1, -0.2]} size={3} speed={0.15} color="#FFFFFF" />
+        </>
+      ) : null}
+      {envKey === 'ocean' ? (
+        <Sparkles count={50} scale={[2.2, 2, 1.4]} position={[0, 1, -0.3]} size={4} speed={0.4} color="#7FD1FF" />
+      ) : null}
+      {envKey === 'night' ? (
+        <Sparkles count={90} scale={[2.6, 2.4, 1.6]} position={[0, 1.4, -0.5]} size={2.5} speed={0.08} color="#FFF6D8" />
+      ) : null}
+      {envKey === 'rainbow' ? (
+        <Sparkles count={40} scale={[2.2, 2, 1.2]} position={[0, 1.2, -0.4]} size={4} speed={0.3} color="#FFE28A" />
+      ) : null}
+      {envKey === 'space' ? (
+        <>
+          <Sparkles count={110} scale={[2.6, 2.6, 1.8]} position={[0, 1.3, -0.6]} size={2.5} speed={0.06} color="#FFFFFF" />
+          <Sparkles count={35} scale={[2.2, 2.2, 1.4]} position={[0, 1.2, -0.5]} size={4} speed={0.12} color="#C9A8FF" />
+        </>
+      ) : null}
+      {envKey === 'xmas' ? (
+        <Sparkles count={80} scale={[2.4, 2.4, 1.6]} position={[0, 1.3, -0.3]} size={3.5} speed={0.5} color="#FFFFFF" />
+      ) : null}
+    </>
+  );
+}
+
 export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) {
   // 'env:*' — 배경 아이템이 무대 그라데이션을 바꾼다
   const envKey = refsOf(items, 'env:')[0] ?? 'default';
@@ -148,6 +241,8 @@ export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) 
         <Suspense fallback={null}>
           <VrmModel items={items} />
         </Suspense>
+        {/* 'env:*' — 배경 전용 데코 (파티클 + 소품) */}
+        <EnvDecor envKey={envKey} />
         {/* 'fx:*' — 이펙트 아이템 파티클 */}
         {fxKeys.includes('sparkle_gold') ? (
           <Sparkles count={45} scale={[0.9, 1.5, 0.9]} position={[0, 0.9, 0]} size={4} speed={0.35} color="#FFD34D" />
