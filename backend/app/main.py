@@ -7,7 +7,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import admin, admin_todos, auth, internal, me, todos
+from app.routers import admin, admin_todos, auth, internal, me, shop, todos
 
 app = FastAPI(title="Todo Reward API", version="0.1.0")
 
@@ -28,6 +28,7 @@ app.include_router(me.router, prefix=API_PREFIX)
 app.include_router(todos.router, prefix=API_PREFIX)
 app.include_router(admin_todos.router, prefix=API_PREFIX)
 app.include_router(admin.router, prefix=API_PREFIX)
+app.include_router(shop.router, prefix=API_PREFIX)
 app.include_router(internal.router, prefix=API_PREFIX)
 
 
