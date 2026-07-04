@@ -18,10 +18,12 @@ import {
 
 import {
   ApiError,
+  equipItem,
   getInventory,
   getMe,
   getShopItems,
   purchaseItem,
+  type InventoryItem,
   type ShopItem,
 } from '../api';
 import { colors, font, radius, shadow, space } from '../theme';
@@ -44,24 +46,45 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const emojiOf = (url: string) => (url.startsWith('emoji:') ? url.slice(6) : '🎁');
 
+// 원피스↔상·하의 동시 착용 불가 — 서버(services/shop.py)와 같은 규칙을 미리보기에도 적용
+const CONFLICTS: Record<string, string[]> = {
+  dress: ['top', 'bottom'],
+  top: ['dress'],
+  bottom: ['dress'],
+};
+
 export function ShopScreen({ onBack }: { onBack: () => void }) {
   const [items, setItems] = useState<ShopItem[]>([]);
-  const [owned, setOwned] = useState<Set<string>>(new Set());
+  const [inv, setInv] = useState<InventoryItem[]>([]);
   const [pointA, setPointA] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // 착용 미리보기 — 카테고리당 1개 (SPEC §3: 같은 카테고리 1개 착용 규칙과 동일한 감각)
+  // 착용 미리보기 — 카테고리당 1개. 보유 아이템은 서버 착장(equip)과 동기화된다.
   const [tryOn, setTryOn] = useState<Record<string, ShopItem>>({});
   const [confirming, setConfirming] = useState(false); // 확인 팝업 표시
   const [buying, setBuying] = useState(false);
 
+  const owned = new Set(inv.map((i) => i.item_id));
+
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [me, catalog, inv] = await Promise.all([getMe(), getShopItems(), getInventory()]);
+      const [me, catalog, wardrobe] = await Promise.all([
+        getMe(),
+        getShopItems(),
+        getInventory(),
+      ]);
       setPointA(me.point_a);
       setItems(catalog);
-      setOwned(new Set(inv.map((i) => i.item_id)));
+      setInv(wardrobe);
+      // 서버에 저장된 착장으로 미리보기 초기화 (새로고침해도 유지)
+      const worn: Record<string, ShopItem> = {};
+      for (const w of wardrobe) {
+        if (!w.equipped) continue;
+        const item = catalog.find((c) => c.id === w.item_id);
+        if (item) worn[item.category] = item;
+      }
+      setTryOn(worn);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : '상점을 불러오지 못했어요.');
     } finally {
@@ -73,14 +96,32 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
     load();
   }, [load]);
 
-  /** 아이템 탭: 착용 중이면 해제, 아니면 그 카테고리에 착용(기존 것 교체). */
+  /** 보유 아이템의 착용 상태를 서버에 저장하고 옷장을 동기화한다. */
+  const persistEquip = async (item: ShopItem, equipped: boolean) => {
+    const row = inv.find((i) => i.item_id === item.id);
+    if (!row) return;
+    try {
+      setInv(await equipItem(row.inventory_id, equipped));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : '착용 저장에 실패했어요.');
+    }
+  };
+
+  /** 아이템 탭: 착용 중이면 해제, 아니면 착용(같은 카테고리·원피스↔상하의 교체). */
   const toggleTryOn = (item: ShopItem) => {
+    const wearing = tryOn[item.category]?.id === item.id;
     setTryOn((prev) => {
       const next = { ...prev };
-      if (next[item.category]?.id === item.id) delete next[item.category];
-      else next[item.category] = item;
+      if (wearing) {
+        delete next[item.category];
+      } else {
+        next[item.category] = item;
+        for (const c of CONFLICTS[item.category] ?? []) delete next[c];
+      }
       return next;
     });
+    // 보유 아이템이면 서버 착장에도 반영 (충돌 해제는 서버가 함께 처리)
+    if (owned.has(item.id)) persistEquip(item, !wearing);
   };
 
   const wornItems = Object.values(tryOn);
@@ -88,15 +129,18 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
   const total = toBuy.reduce((s, it) => s + it.price, 0);
   const canBuy = toBuy.length > 0 && total <= pointA && !buying;
 
-  /** 확인 팝업에서 "네" → 실제 구매(차감). */
+  /** 확인 팝업에서 "네" → 실제 구매(차감) + 입고 있던 아이템은 착장으로 저장. */
   const confirmPurchase = async () => {
     setBuying(true);
     setError(null);
     try {
+      let wardrobe = inv;
       for (const it of toBuy) {
         const res = await purchaseItem(it.id); // 순차 구매, 서버 잔액만 반영
         setPointA(res.balances.point_a);
-        setOwned((prev) => new Set(prev).add(it.id));
+        // 미리보기에 입고 있던 채로 샀으니 바로 착용 저장 (충돌 해제는 서버 처리)
+        wardrobe = await equipItem(res.inventory_id, true);
+        setInv(wardrobe);
       }
       setConfirming(false);
     } catch (e) {

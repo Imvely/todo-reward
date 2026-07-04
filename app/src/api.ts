@@ -127,11 +127,39 @@ export type PurchaseResponse = {
 export const getShopItems = (category?: string) =>
   request<ShopItem[]>(`/shop/items${category ? `?category=${category}` : ''}`);
 export const getInventory = () => request<InventoryItem[]>('/inventory');
+export const equipItem = (inventoryId: string, equipped: boolean) =>
+  request<InventoryItem[]>(`/inventory/${inventoryId}/equip`, {
+    method: 'PATCH',
+    body: JSON.stringify({ equipped }),
+  });
 export const purchaseItem = (itemId: string) =>
   request<PurchaseResponse>('/shop/purchase', {
     method: 'POST',
     body: JSON.stringify({ item_id: itemId }),
   });
+
+// ── 코인머니 / 적립 통장 ──
+export type CoinTransaction = {
+  id: number;
+  amount: number; // 전환 양수 / 출금 음수
+  reason: 'settlement' | 'withdraw';
+  memo: string | null;
+  created_at: string;
+};
+
+export type Coins = {
+  coin_balance: number;
+  next_settlement: {
+    sunday: string;
+    boundary_time: string;
+    point_b: number;
+    projected_convert: number;
+    projected_carry: number;
+  };
+  transactions: CoinTransaction[];
+};
+
+export const getCoins = () => request<Coins>('/coins');
 
 // ── 관리자 ──
 export const getManagedUser = () => request<Me>('/admin/user');

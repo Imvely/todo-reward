@@ -14,7 +14,7 @@ from app.core.security import hash_password
 from app.models.points import PointTransaction
 from app.models.shop import ShopItem, UserInventory
 from app.models.user import User
-from app.services.shop import purchase_item
+from app.services.shop import purchase_item, set_equipped
 
 
 def _mk_user(db, a=100, b=100, role="user"):
@@ -114,4 +114,69 @@ def test_purchase_inactive_item_404(db_session):
     it = _mk_item(db_session, price=30, active=False)
     with pytest.raises(HTTPException) as exc:
         purchase_item(db_session, u, it.id)
+    assert exc.value.status_code == 404
+
+
+# ── §6-6: 착용 — 같은 카테고리 1개, 원피스↔상·하의 상호 해제 ────────────
+def _buy(db, user, item):
+    return purchase_item(db, user, item.id).inventory_id
+
+
+def _equipped_cats(db, user):
+    rows = db.scalars(
+        select(UserInventory).where(
+            UserInventory.user_id == user.id, UserInventory.equipped.is_(True)
+        )
+    ).all()
+    return sorted(r.category for r in rows)
+
+
+def test_equip_same_category_auto_unequips(db_session):
+    u = _mk_user(db_session, a=100)
+    h1 = _mk_item(db_session, price=10, category="hair", name="머리1")
+    h2 = _mk_item(db_session, price=10, category="hair", name="머리2")
+    inv1 = _buy(db_session, u, h1)
+    inv2 = _buy(db_session, u, h2)
+
+    set_equipped(db_session, u, inv1, True)
+    assert _equipped_cats(db_session, u) == ["hair"]
+
+    set_equipped(db_session, u, inv2, True)  # 두 번째 착용 → 첫 번째 자동 해제
+    worn = db_session.scalars(
+        select(UserInventory).where(UserInventory.user_id == u.id, UserInventory.equipped.is_(True))
+    ).all()
+    assert len(worn) == 1 and worn[0].id == inv2
+
+
+def test_equip_dress_unequips_top_bottom(db_session):
+    u = _mk_user(db_session, a=100)
+    top = _mk_item(db_session, price=10, category="top", name="상의")
+    bottom = _mk_item(db_session, price=10, category="bottom", name="하의")
+    dress = _mk_item(db_session, price=10, category="dress", name="원피스")
+    it, ib, idr = _buy(db_session, u, top), _buy(db_session, u, bottom), _buy(db_session, u, dress)
+
+    set_equipped(db_session, u, it, True)
+    set_equipped(db_session, u, ib, True)
+    assert _equipped_cats(db_session, u) == ["bottom", "top"]
+
+    set_equipped(db_session, u, idr, True)  # 원피스 → 상·하의 자동 해제
+    assert _equipped_cats(db_session, u) == ["dress"]
+
+    set_equipped(db_session, u, it, True)  # 상의 → 원피스 자동 해제
+    assert _equipped_cats(db_session, u) == ["top"]
+
+
+def test_unequip(db_session):
+    u = _mk_user(db_session, a=100)
+    h = _mk_item(db_session, price=10, category="hair")
+    inv = _buy(db_session, u, h)
+    set_equipped(db_session, u, inv, True)
+    set_equipped(db_session, u, inv, False)
+    assert _equipped_cats(db_session, u) == []
+
+
+def test_equip_not_mine_404(db_session):
+    u = _mk_user(db_session, a=100)
+    with pytest.raises(HTTPException) as exc:
+        set_equipped(db_session, u, uuid.uuid4(), True)
     assert exc.value.status_code == 404

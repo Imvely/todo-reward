@@ -11,6 +11,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getMe, type Me } from './src/api';
 import { AdminScreen } from './src/screens/AdminScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { SavingsScreen } from './src/screens/SavingsScreen';
 import { ShopScreen } from './src/screens/ShopScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
 import { clearToken, loadToken } from './src/storage';
@@ -70,14 +71,24 @@ export default function App() {
   );
 }
 
-/** 사용자 화면 흐름 — 오늘(메인)에서 A·아바타 카드를 누르면 상점, 상점 ←로 복귀. */
+/** 사용자 화면 흐름 — A·아바타 카드=상점, B·적립 카드=적립 통장, ←로 복귀. */
 function UserFlow({ onLogout }: { onLogout: () => void }) {
-  const [view, setView] = useState<'today' | 'shop'>('today');
+  const [view, setView] = useState<'today' | 'shop' | 'savings'>('today');
   if (view === 'shop') {
     return <ShopScreen onBack={() => setView('today')} />;
   }
-  // key로 복귀 시 재마운트 → 상점에서 쓴 잔액이 바로 반영된다
-  return <TodayScreen key="today" onLogout={onLogout} onOpenShop={() => setView('shop')} />;
+  if (view === 'savings') {
+    return <SavingsScreen onBack={() => setView('today')} />;
+  }
+  // key로 복귀 시 재마운트 → 상점/통장에서 바뀐 잔액이 바로 반영된다
+  return (
+    <TodayScreen
+      key="today"
+      onLogout={onLogout}
+      onOpenShop={() => setView('shop')}
+      onOpenSavings={() => setView('savings')}
+    />
+  );
 }
 
 const styles = StyleSheet.create({

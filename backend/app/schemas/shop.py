@@ -28,6 +28,10 @@ class PurchaseResponse(BaseModel):
     balances: dict[str, int]  # {"point_a": .., "point_b": ..}
 
 
+class EquipRequest(BaseModel):
+    equipped: bool  # true=착용, false=해제
+
+
 class InventoryItemOut(BaseModel):
     """옷장 한 칸 — 인벤토리 + 아이템 상세를 합친 뷰."""
 

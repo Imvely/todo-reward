@@ -73,3 +73,49 @@ def purchase_item(db: Session, user: User, item_id: uuid.UUID) -> PurchaseResult
         item=item,
         balances={"point_a": user.point_a, "point_b": user.point_b},
     )
+
+
+# 원피스와 상·하의는 동시에 입을 수 없다 (TECH_DESIGN §2 주석 — 서비스 로직 처리).
+_CONFLICTS: dict[str, tuple[str, ...]] = {
+    "dress": ("top", "bottom"),
+    "top": ("dress",),
+    "bottom": ("dress",),
+}
+
+
+def set_equipped(db: Session, user: User, inventory_id: uuid.UUID, equipped: bool) -> None:
+    """옷장 아이템 착용/해제 (§6-6). 같은 카테고리 기존 착용은 자동 해제.
+
+    DB 부분 유니크 인덱스(one_equipped_per_cat)가 최후 방어선이지만,
+    여기서 먼저 해제해 사용자 흐름에서는 항상 성공하게 한다.
+    """
+    if user.role != "user":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="옷장은 사용자만 이용할 수 있습니다",
+        )
+
+    inv = db.get(UserInventory, inventory_id)
+    if inv is None or inv.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="옷장에서 찾을 수 없습니다"
+        )
+
+    if equipped:
+        # 같은 카테고리 + 충돌 카테고리(원피스↔상·하의)의 기존 착용을 해제.
+        conflict_cats = (inv.category, *_CONFLICTS.get(inv.category, ()))
+        worn = db.scalars(
+            select(UserInventory).where(
+                UserInventory.user_id == user.id,
+                UserInventory.category.in_(conflict_cats),
+                UserInventory.equipped.is_(True),
+                UserInventory.id != inv.id,
+            )
+        ).all()
+        for w in worn:
+            w.equipped = False
+        db.flush()  # 부분 유니크 인덱스 위반 방지 — 해제를 먼저 반영
+        inv.equipped = True
+    else:
+        inv.equipped = False
+    db.commit()

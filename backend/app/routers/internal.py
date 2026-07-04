@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db
 from app.services.day_close import close_day
+from app.services.settlement import settle_week
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
@@ -45,6 +46,31 @@ def run_close_day(
                 "mission_points": r.mission_points,
                 "day_bonus": r.day_bonus,
                 "streak_bonus": r.streak_bonus,
+            }
+            for r in results
+        ]
+    }
+
+
+@router.post("/settle", dependencies=[Depends(verify_cron_secret)])
+def run_settle(
+    date: datetime.date | None = None,
+    db: Session = Depends(get_db),
+) -> dict:
+    """주간 결산: 일요일이 끝난 뒤 B포인트 캡전환 (멱등, §4.3).
+
+    date 미지정 시 '방금 끝난 논리적 날짜'가 일요일일 때만 실행 (아니면 빈 결과).
+    매일 돌아도 안전 — 일요일 판정 + (user, 주차) UNIQUE 이중 방어.
+    """
+    results = settle_week(db, sunday=date)
+    return {
+        "results": [
+            {
+                "user_id": r.user_id,
+                "iso_year_week": r.iso_year_week,
+                "converted": r.converted,
+                "carried_over": r.carried_over,
+                "already_settled": r.already_settled,
             }
             for r in results
         ]

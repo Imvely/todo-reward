@@ -37,9 +37,11 @@ let popSeq = 0;
 export function TodayScreen({
   onLogout,
   onOpenShop,
+  onOpenSavings,
 }: {
   onLogout: () => void;
   onOpenShop: () => void;
+  onOpenSavings: () => void;
 }) {
   const [me, setMe] = useState<Me | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -161,7 +163,14 @@ export function TodayScreen({
             emoji="🎀"
             onPress={onOpenShop}
           />
-          <WalletChip label="B · 적립" value={me?.point_b ?? 0} tint={colors.b} soft={colors.bSoft} emoji="🌱" />
+          <WalletChip
+            label="B · 적립"
+            value={me?.point_b ?? 0}
+            tint={colors.b}
+            soft={colors.bSoft}
+            emoji="🌱"
+            onPress={onOpenSavings}
+          />
         </View>
 
         {/* 들어올 예정 포인트 — 서버 pending만 표시, 토글마다 실시간 갱신 (SPEC §2.2) */}

@@ -40,10 +40,14 @@
 - [x] A상점: 카탈로그/구매 API (§3, §6-5 테스트) + UI — 2026-07-04
       API: POST /shop/purchase(A만 차감·B불변·원자적), GET /shop/items, GET /inventory. §6-5 테스트 6개(총 31 pass).
       UI: ShopScreen(카테고리 그룹·보유중·잔액부족 표시·구매 팡) + 하단 탭(오늘/상점). seed_shop.py 17개(emoji: 플레이스홀더, UTF-8 .py 시드 — 인라인 shell은 한글 깨짐). 헤드리스 구매 검증.
-- [ ] 옷장/착용: 카테고리당 1개 equipped (부분 유니크 인덱스, §6-6 테스트)
+- [x] 옷장/착용: 카테고리당 1개 equipped (부분 유니크 인덱스, §6-6 테스트) — 2026-07-04 밤
+      PATCH /inventory/{id}/equip (같은 카테고리 + 원피스↔상·하의 자동 해제, services/shop.set_equipped).
+      테스트 4개(총 37 pass). 상점 미리보기가 서버 착장과 동기화 — 구매 시 자동 착용 저장, 새로고침 유지 검증.
 - [ ] 아바타 레이어 렌더링 (DiceBear 등 무료 에셋으로 시작, SPEC §3.4)
 - [ ] 아바타 룸 + 캡처 저장
-- [ ] ★ 일요일 결산 크론: 캡전환 + 멱등성 (TECH_DESIGN §4.3, §6-4 테스트)
+- [x] ★ 일요일 결산 크론: 캡전환 + 멱등성 (TECH_DESIGN §4.3, §6-4 테스트) — 2026-07-04 심야
+      services/settlement.py(500 미만 이월·100단위·B만 차감·(user,주차) UNIQUE 멱등), POST /internal/settle(비일요일 no-op, 매일 돌아도 안전), §6-4 테스트 11개 — 총 48 pass.
+- [x] B상점(적립 통장) 화면 + GET /coins — 2026-07-04 심야 (B칩→통장: 코인 잔액·다음 결산 예고(서버 계산 전환/이월)·거래 내역. 헤드리스 검증)
 
 ## Phase 4 — 관리자 + 부가기능
 
