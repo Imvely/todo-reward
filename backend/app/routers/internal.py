@@ -42,6 +42,7 @@ def run_close_day(
                 "completed": r.completed,
                 "already_closed": r.already_closed,
                 "streak": r.streak,
+                "mission_points": r.mission_points,
                 "day_bonus": r.day_bonus,
                 "streak_bonus": r.streak_bonus,
             }

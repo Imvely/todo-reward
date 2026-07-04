@@ -17,6 +17,7 @@ from sqlalchemy import (
     Integer,
     Text,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -62,7 +63,7 @@ class PointTransaction(Base):
 
 
 class DailyBonusLog(Base):
-    """그날 지급된 보너스 기록. 토글 OFF로 완주가 깨질 때 정확 회수의 근거."""
+    """하루 마감 정산 내역 + 멱등 키 (§4.6). 마감한 날마다 행을 남긴다 (완주 여부 무관)."""
 
     __tablename__ = "daily_bonus_log"
 
@@ -70,10 +71,11 @@ class DailyBonusLog(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True
     )
     due_date: Mapped[datetime.date] = mapped_column(Date, primary_key=True)
-    day_bonus: Mapped[int] = mapped_column(Integer, nullable=False)  # 지급된 완주 보너스 (보통 10)
+    # 지급된 미션 포인트 합 (5×완료 수). 미완주 날에도 지급되므로 모든 날에 멱등 키가 필요.
+    mission_points: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    # 완주 보너스 (완주 10, 아니면 0)
+    day_bonus: Mapped[int] = mapped_column(Integer, nullable=False)
     streak_bonus: Mapped[int] = mapped_column(
         Integer, nullable=False
     )  # 지급된 연속 보너스 10×(N-1)
-    streak_n: Mapped[int] = mapped_column(
-        Integer, nullable=False
-    )  # 지급 당시 N (회수 시 되돌릴 값)
+    streak_n: Mapped[int] = mapped_column(Integer, nullable=False)  # 지급 당시 N (미완주 날은 0)

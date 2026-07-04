@@ -11,6 +11,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getMe, type Me } from './src/api';
 import { AdminScreen } from './src/screens/AdminScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { ShopScreen } from './src/screens/ShopScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
 import { clearToken, loadToken } from './src/storage';
 import { colors } from './src/theme';
@@ -63,10 +64,20 @@ export default function App() {
       ) : auth.role === 'admin' ? (
         <AdminScreen onLogout={logout} />
       ) : (
-        <TodayScreen onLogout={logout} />
+        <UserFlow onLogout={logout} />
       )}
     </View>
   );
+}
+
+/** 사용자 화면 흐름 — 오늘(메인)에서 A·아바타 카드를 누르면 상점, 상점 ←로 복귀. */
+function UserFlow({ onLogout }: { onLogout: () => void }) {
+  const [view, setView] = useState<'today' | 'shop'>('today');
+  if (view === 'shop') {
+    return <ShopScreen onBack={() => setView('today')} />;
+  }
+  // key로 복귀 시 재마운트 → 상점에서 쓴 잔액이 바로 반영된다
+  return <TodayScreen key="today" onLogout={onLogout} onOpenShop={() => setView('shop')} />;
 }
 
 const styles = StyleSheet.create({

@@ -15,12 +15,24 @@ from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.todo import Todo
 from app.models.user import User
-from app.schemas.todo import ReorderRequest, TodoOut, ToggleResponse
+from app.schemas.todo import PendingOut, ReorderRequest, TodoOut, ToggleResponse
 from app.services.day_boundary import current_logical_date
+from app.services.day_close import compute_pending
 from app.services.toggle import toggle_todo
 from app.services.users import resolve_todo_owner
 
 router = APIRouter(tags=["todos"])
+
+
+def _pending_out(p) -> PendingOut:
+    return PendingOut(
+        date=p.date,
+        mission=p.mission,
+        day_bonus=p.day_bonus,
+        streak_bonus=p.streak_bonus,
+        total=p.total,
+        boundary_time=p.boundary_time,
+    )
 
 
 @router.patch("/todos/{todo_id}/toggle", response_model=ToggleResponse)
@@ -29,18 +41,28 @@ def toggle(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> ToggleResponse:
-    """완료 토글. 오늘 것만 허용. 포인트 지급/회수는 서비스가 원장에 기록 (§4.1/§4.2).
+    """완료 토글. 오늘 것만 허용. 잔액 불변 — 지급은 하루 마감(§4.6)이 한다.
 
-    응답의 awarded/new_badges만이 클라이언트 연출의 근거다 (클라이언트 자체 계산 금지).
+    응답의 pending/new_badges만이 클라이언트 표시의 근거다 (클라이언트 자체 계산 금지).
     """
     result = toggle_todo(db, user, todo_id)
     return ToggleResponse(
         todo=TodoOut.model_validate(result.todo),
-        awarded=[{"reason": a.reason, "amount": a.amount} for a in result.awarded],
+        pending=_pending_out(result.pending),
         streak=result.streak,
         new_badges=result.new_badges,
         balances=result.balances,
     )
+
+
+@router.get("/points/pending", response_model=PendingOut)
+def get_pending(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> PendingOut:
+    """다음 하루 경계에 들어올 예정 포인트 (§4.2.1). 관리자는 관리 대상 사용자 기준."""
+    owner = resolve_todo_owner(db, user)
+    return _pending_out(compute_pending(db, owner))
 
 
 @router.get("/todos", response_model=list[TodoOut])

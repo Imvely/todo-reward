@@ -61,14 +61,22 @@ export type Todo = {
   sort_order: number;
 };
 
-export type Award = { reason: string; amount: number };
+/** 다음 하루 경계에 들어올 예정 포인트 — 서버가 유일한 계산 지점 (자체 계산 금지). */
+export type Pending = {
+  date: string;
+  mission: number;
+  day_bonus: number;
+  streak_bonus: number;
+  total: number; // 지갑당 합계 (A·B 각각)
+  boundary_time: string; // 'HH:MM'
+};
 
 export type ToggleResponse = {
   todo: Todo;
-  awarded: Award[];
+  pending: Pending;
   streak: number;
   new_badges: string[];
-  balances: { point_a: number; point_b: number };
+  balances: { point_a: number; point_b: number }; // 토글로는 안 변함
 };
 
 // ── 엔드포인트 ──
@@ -85,8 +93,45 @@ export const getTodos = (date?: string) =>
   request<Todo[]>(`/todos${date ? `?date=${date}` : ''}`);
 export const toggleTodo = (id: string) =>
   request<ToggleResponse>(`/todos/${id}/toggle`, { method: 'PATCH' });
+export const getPending = () => request<Pending>('/points/pending');
 export const reorderTodos = (items: { id: string; sort_order: number }[]) =>
   request<Todo[]>('/todos/reorder', { method: 'PATCH', body: JSON.stringify({ items }) });
+
+// ── A상점 / 옷장 ──
+export type ShopItem = {
+  id: string;
+  category: string;
+  name: string;
+  price: number;
+  image_url: string;
+  layer_z: number;
+};
+
+export type InventoryItem = {
+  inventory_id: string;
+  item_id: string;
+  category: string;
+  equipped: boolean;
+  name: string;
+  image_url: string;
+  price: number;
+  layer_z: number;
+};
+
+export type PurchaseResponse = {
+  inventory_id: string;
+  item: ShopItem;
+  balances: { point_a: number; point_b: number };
+};
+
+export const getShopItems = (category?: string) =>
+  request<ShopItem[]>(`/shop/items${category ? `?category=${category}` : ''}`);
+export const getInventory = () => request<InventoryItem[]>('/inventory');
+export const purchaseItem = (itemId: string) =>
+  request<PurchaseResponse>('/shop/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ item_id: itemId }),
+  });
 
 // ── 관리자 ──
 export const getManagedUser = () => request<Me>('/admin/user');

@@ -23,7 +23,10 @@
 - [x] ★ 토글 서비스: 토글 ON (TECH_DESIGN §4.1) — 2026-07-04 (미션+5, 완주+10, 연속+10×(N−1), daily_bonus_log)
 - [x] ★ 토글 서비스: 토글 OFF (TECH_DESIGN §4.2) — 2026-07-04 (정확 회수 + streak 되돌림, clamp 완화규칙)
 - [x] ★ TECH_DESIGN §6 시나리오 테스트 1~3 — 2026-07-04 (잔액-원장 일치 검증)
-- [x] ★ 하루 마감 크론: 완주·연속 보너스 지급 (TECH_DESIGN §4.6, `POST /internal/close_day`, 멱등) — 2026-07-04 (설계 변경: 완주 보너스를 토글 즉시→하루 경계로 이동. services/day_close.py, test_day_close.py. 총 25 pass)
+- [x] ★ 하루 마감 크론: 완주·연속 보너스 지급 (TECH_DESIGN §4.6, `POST /internal/close_day`, 멱등) — 2026-07-04
+- [x] ★ 포인트 일괄정산 재설계 — 2026-07-04 밤 (실시간 지급의 "소비→취소→재완료" 무한 생성 버그를 사용자가 발견).
+      토글은 잔액 불변, 미션+완주+연속 전부 하루 마감에 합산 지급. pending(§4.2.1) 실시간 표시. 마이그레이션 29ad3da1c7d0. 총 33 pass.
+- [ ] 로컬 하루마감 자동 실행 임시 방편 (크론은 Phase 6) — /morning에서 전일 close_day 호출 검토
 
 ## Phase 2 — 사용자 앱 핵심 (로컬)
 
@@ -34,8 +37,9 @@
 
 ## Phase 3 — 상점과 아바타 (로컬)
 
-- [~] A상점: 카탈로그/구매 API (§3, §6-5 테스트) + UI
-      → 구매 API 완료 (2026-07-04): POST /shop/purchase(A만 차감·B불변·원자적), GET /shop/items, GET /inventory. §6-5 테스트 6개(총 31 pass). UI는 남음. 카탈로그 시드는 UTF-8 .py로(인라인 shell은 한글 깨짐).
+- [x] A상점: 카탈로그/구매 API (§3, §6-5 테스트) + UI — 2026-07-04
+      API: POST /shop/purchase(A만 차감·B불변·원자적), GET /shop/items, GET /inventory. §6-5 테스트 6개(총 31 pass).
+      UI: ShopScreen(카테고리 그룹·보유중·잔액부족 표시·구매 팡) + 하단 탭(오늘/상점). seed_shop.py 17개(emoji: 플레이스홀더, UTF-8 .py 시드 — 인라인 shell은 한글 깨짐). 헤드리스 구매 검증.
 - [ ] 옷장/착용: 카테고리당 1개 equipped (부분 유니크 인덱스, §6-6 테스트)
 - [ ] 아바타 레이어 렌더링 (DiceBear 등 무료 에셋으로 시작, SPEC §3.4)
 - [ ] 아바타 룸 + 캡처 저장

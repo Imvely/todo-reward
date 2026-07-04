@@ -1,6 +1,7 @@
 /**
- * 오늘 — 이 앱의 심장. 진행 링이 차오르고, 미션을 완료하면 포인트가 팡 오른다.
- * 완주 보너스는 하루 마감 때 들어오므로(SPEC §2.2), 다 끝내면 그렇게 안내한다.
+ * 오늘 — 이 앱의 심장. 진행 링이 차오르고, 완료할 때마다 "들어올 예정 포인트"가 커진다.
+ * 모든 포인트는 하루 마감에 일괄 지급되므로(SPEC §2.2) 낮에는 잔액이 변하지 않는다.
+ * 예정 금액은 서버 pending만 표시한다 (클라이언트 자체 계산 금지).
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -16,10 +17,12 @@ import {
 import {
   ApiError,
   getMe,
+  getPending,
   getTodos,
   reorderTodos,
   toggleTodo,
   type Me,
+  type Pending,
   type Todo,
 } from '../api';
 import { clearToken } from '../storage';
@@ -31,9 +34,16 @@ import { colors, font, radius, space } from '../theme';
 
 let popSeq = 0;
 
-export function TodayScreen({ onLogout }: { onLogout: () => void }) {
+export function TodayScreen({
+  onLogout,
+  onOpenShop,
+}: {
+  onLogout: () => void;
+  onOpenShop: () => void;
+}) {
   const [me, setMe] = useState<Me | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [pending, setPending] = useState<Pending | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +53,10 @@ export function TodayScreen({ onLogout }: { onLogout: () => void }) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [meRes, todoRes] = await Promise.all([getMe(), getTodos()]);
+      const [meRes, todoRes, pendingRes] = await Promise.all([getMe(), getTodos(), getPending()]);
       setMe(meRes);
       setTodos(todoRes);
+      setPending(pendingRes);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : '불러오지 못했어요. 서버 연결을 확인해 주세요.');
     } finally {
@@ -67,10 +78,12 @@ export function TodayScreen({ onLogout }: { onLogout: () => void }) {
           ? { ...prev, point_a: res.balances.point_a, point_b: res.balances.point_b, current_streak: res.streak }
           : prev,
       );
-      const mission = res.awarded.find((a) => a.reason.startsWith('mission'));
-      if (mission) {
+      // 예정 금액의 변화량(서버 값끼리의 차이)을 팡으로 보여준다
+      const delta = res.pending.total - (pending?.total ?? 0);
+      setPending(res.pending);
+      if (delta !== 0) {
         const id = ++popSeq;
-        setPops((p) => [...p, { id, amount: mission.amount }]);
+        setPops((p) => [...p, { id, amount: delta }]);
       }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : '토글에 실패했어요.');
@@ -140,9 +153,32 @@ export function TodayScreen({ onLogout }: { onLogout: () => void }) {
       {/* 지갑 + 포인트 팡 */}
       <View>
         <View style={styles.wallets}>
-          <WalletChip label="A · 아바타" value={me?.point_a ?? 0} tint={colors.a} soft={colors.aSoft} emoji="🎀" />
+          <WalletChip
+            label="A · 아바타"
+            value={me?.point_a ?? 0}
+            tint={colors.a}
+            soft={colors.aSoft}
+            emoji="🎀"
+            onPress={onOpenShop}
+          />
           <WalletChip label="B · 적립" value={me?.point_b ?? 0} tint={colors.b} soft={colors.bSoft} emoji="🌱" />
         </View>
+
+        {/* 들어올 예정 포인트 — 서버 pending만 표시, 토글마다 실시간 갱신 (SPEC §2.2) */}
+        {pending ? (
+          <View style={styles.pendingCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pendingLabel}>
+                다음 {pending.boundary_time}에 들어와요 <Text style={styles.pendingNote}>(현재 기준)</Text>
+              </Text>
+              <Text style={styles.pendingBreakdown}>
+                미션 {pending.mission} · 완주 {pending.day_bonus} · 연속 {pending.streak_bonus}
+              </Text>
+            </View>
+            <Text style={styles.pendingTotal}>+{pending.total}P</Text>
+          </View>
+        ) : null}
+
         {pops.map((p) => (
           <PointPop
             key={p.id}
@@ -173,7 +209,9 @@ export function TodayScreen({ onLogout }: { onLogout: () => void }) {
       {allDone ? (
         <View style={styles.banner}>
           <Text style={styles.bannerTitle}>오늘 다 끝냈어요! 🎉</Text>
-          <Text style={styles.bannerBody}>완주·연속 보너스는 하루가 마감될 때 통장에 들어와요.</Text>
+          <Text style={styles.bannerBody}>
+            오늘 모은 포인트는 하루가 마감되는 {pending?.boundary_time ?? '00:00'}에 한 번에 들어와요.
+          </Text>
         </View>
       ) : null}
 
@@ -238,6 +276,23 @@ const styles = StyleSheet.create({
   sub: { fontFamily: font.body, fontSize: 13, color: colors.subtext, marginTop: 2 },
   logout: { fontFamily: font.bodyMedium, fontSize: 13, color: colors.subtext },
   wallets: { flexDirection: 'row', gap: space(3), marginTop: space(5) },
+  pendingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(3),
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderStyle: 'dashed',
+    borderRadius: radius.lg,
+    paddingVertical: space(3),
+    paddingHorizontal: space(4),
+    marginTop: space(3),
+  },
+  pendingLabel: { fontFamily: font.bodyBold, fontSize: 13, color: colors.ink },
+  pendingNote: { fontFamily: font.body, fontSize: 11, color: colors.subtext },
+  pendingBreakdown: { fontFamily: font.body, fontSize: 11, color: colors.subtext, marginTop: 2 },
+  pendingTotal: { fontFamily: font.display, fontSize: 24, color: colors.streak },
   ringWrap: { alignItems: 'center', marginTop: space(7), marginBottom: space(2) },
   ringNum: { fontFamily: font.display, fontSize: 46, color: colors.ink, lineHeight: 50 },
   ringDen: { fontFamily: font.display, fontSize: 24, color: colors.subtext },

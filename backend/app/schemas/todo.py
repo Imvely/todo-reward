@@ -30,21 +30,25 @@ class ReorderRequest(BaseModel):
     items: list[ReorderItem]
 
 
-class AwardItem(BaseModel):
-    """토글로 발생한 지급/회수 1건. amount는 지갑당 값(A·B 동일), 회수는 음수."""
+class PendingOut(BaseModel):
+    """다음 하루 경계에 들어올 예정 포인트 (§4.2.1). 서버가 유일한 계산 지점."""
 
-    reason: str
-    amount: int
+    date: datetime.date
+    mission: int
+    day_bonus: int
+    streak_bonus: int
+    total: int  # 지갑당 합계 (A·B 각각)
+    boundary_time: str  # 'HH:MM'
 
 
 class ToggleResponse(BaseModel):
-    """PATCH /todos/{id}/toggle 응답 — 클라이언트가 '팡' 연출을 재생할 근거. TECH_DESIGN §3."""
+    """PATCH /todos/{id}/toggle 응답. 잔액 불변 — pending이 실시간 표시 근거. TECH_DESIGN §3."""
 
     todo: TodoOut
-    awarded: list[AwardItem]
+    pending: PendingOut
     streak: int
     new_badges: list[str]
-    balances: dict[str, int]  # {"point_a": .., "point_b": ..}
+    balances: dict[str, int]  # {"point_a": .., "point_b": ..} (토글로는 안 변함)
 
 
 class AdminTodoCreate(BaseModel):
