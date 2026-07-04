@@ -45,10 +45,15 @@
       테스트 4개(총 37 pass). 상점 미리보기가 서버 착장과 동기화 — 구매 시 자동 착용 저장, 새로고침 유지 검증.
 - [~] 아바타 레이어 렌더링 — AvatarView 공용 컴포넌트로 기반 마련 (emoji 플레이스홀더, layer_z 정렬).
 - [ ] ★ 3D 아바타 (VRM) — TECH_DESIGN §7 설계 확정 (2026-07-04, 조사: docs/research/avatar-3d-research.md)
-  - [x] B-0 스파이크 — 2026-07-04 저녁 (AvatarStage.web/.native 분리, 샘플 VRM 렌더+팔내림 포즈+드래그 회전+3D PNG 캡처. Expo 웹 968모듈 번들 OK, 에러 0)
-  - [ ] B-1: shop_items.asset_ref 마이그레이션 + 메시 가시성 토글 + 아바타 룸 3D 전환(2D 폴백)
-  - [ ] B-2: VRoid Studio로 캐릭터·의상 에셋 제작 + 노드 매핑 (스타일은 사용자와 결정 [미정])
-  - [ ] B-3: 상점 시착 3D화, idle 애니메이션, 네이티브 WebView
+  - [x] B-0 스파이크 — 2026-07-04 (VRM 렌더+회전+캡처, .web.tsx 격리)
+  - [x] B-1 확장판 — 2026-07-04 저녁~밤: asset_ref(prop/fx/env/tint/combo) + 3D 프롭 32종 +
+        일러스트 배경 6종(CanvasTexture 360° 실린더 + 3D 소품·모션) + 틴트 리컬러(상·하의·신발·헤어) +
+        스페셜 세트 7종(콤보) + 상점 시착 3D(고정 무대 드레스업 UX) + 뼈 실측 캘리브레이션.
+        판매 65종 = 전부 실착용 가능 원칙.
+  - [ ] B-2: VRoid Studio로 캐릭터·의상 에셋 제작 + 노드 매핑 (스타일은 사용자와 결정 [미정]) —
+        원피스·한복·구두 등 "모양이 다른 옷"은 이것 이후 재활성
+  - [ ] B-3: idle 애니메이션, 네이티브 WebView 임베드
+- [ ] /morning 프로토콜에 전일 close_day + (월요일엔) settle 자동 호출 추가 — 크론 전(Phase 6)까지의 로컬 정산 루틴
 - [x] 아바타 룸 + 캡처 저장 — 2026-07-04 심야 (AvatarRoomScreen: 착장 무대 + PNG 캡처 다운로드(웹 canvas, 네이티브는 Phase 5에 view-shot) + 상점 바로가기. 오늘 화면 헤더 🧍‍♀️ 버튼 진입)
 - [x] ★ 일요일 결산 크론: 캡전환 + 멱등성 (TECH_DESIGN §4.3, §6-4 테스트) — 2026-07-04 심야
       services/settlement.py(500 미만 이월·100단위·B만 차감·(user,주차) UNIQUE 멱등), POST /internal/settle(비일요일 no-op, 매일 돌아도 안전), §6-4 테스트 11개 — 총 48 pass.
