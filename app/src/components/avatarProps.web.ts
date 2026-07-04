@@ -60,6 +60,8 @@ const at = <T extends THREE.Object3D>(obj: T, x: number, y: number, z: number, r
 export type PropDef = {
   bone: VRMHumanBoneName | 'world'; // 'world' = 씬 바닥 등 뼈와 무관
   build: () => THREE.Group;
+  /** 착용 시 숨길 VRM 기본 의상 머티리얼 프리픽스 (예: 'Bottoms_01' → 기본 반바지 대체) */
+  hideMats?: string[];
 };
 
 export const PROPS: Record<string, PropDef> = {
@@ -88,17 +90,17 @@ export const PROPS: Record<string, PropDef> = {
   round_glasses: {
     bone: 'head',
     build: () =>
-      at(g(at(M.torus(0.03, 0.0035, C.dark), -0.04, 0, 0), at(M.torus(0.03, 0.0035, C.dark), 0.04, 0, 0), at(M.box(0.022, 0.004, 0.004, C.dark), 0, 0.008, 0)), 0, 0.088, 0.118),
+      at(g(at(M.torus(0.03, 0.0035, C.dark), -0.04, 0, 0), at(M.torus(0.03, 0.0035, C.dark), 0.04, 0, 0), at(M.box(0.022, 0.004, 0.004, C.dark), 0, 0.008, 0)), 0, 0.066, 0.118),
   },
   goggles: {
     bone: 'head',
     build: () =>
-      at(g(at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), 0.04, 0, 0, Math.PI / 2), at(M.box(0.16, 0.014, 0.006, C.mint), 0, 0, -0.004)), 0, 0.092, 0.116),
+      at(g(at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), 0.04, 0, 0, Math.PI / 2), at(M.box(0.16, 0.014, 0.006, C.mint), 0, 0, -0.004)), 0, 0.07, 0.116),
   },
   sunglasses: {
     bone: 'head',
     build: () =>
-      at(g(at(M.cylinder(0.03, 0.03, 0.006, C.dark), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.03, 0.03, 0.006, C.dark), 0.04, 0, 0, Math.PI / 2), at(M.box(0.024, 0.005, 0.005, C.dark), 0, 0.01, 0)), 0, 0.088, 0.12),
+      at(g(at(M.cylinder(0.03, 0.03, 0.006, C.dark), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.03, 0.03, 0.006, C.dark), 0.04, 0, 0, Math.PI / 2), at(M.box(0.024, 0.005, 0.005, C.dark), 0, 0.01, 0)), 0, 0.066, 0.12),
   },
   // ── 동물 귀 (head) ──
   cat_ears: {
@@ -142,30 +144,30 @@ export const PROPS: Record<string, PropDef> = {
   pearl_necklace: {
     bone: 'neck',
     build: () => {
-      const pearls = Array.from({ length: 12 }, (_, i) => at(M.sphere(0.0085, C.cream), Math.cos((i * 2 * Math.PI) / 12) * 0.055, -0.03 - Math.abs(Math.sin((i * Math.PI) / 12)) * 0.01, Math.sin((i * 2 * Math.PI) / 12) * 0.055));
+      const pearls = Array.from({ length: 12 }, (_, i) => at(M.sphere(0.0085, C.cream), Math.cos((i * 2 * Math.PI) / 12) * 0.062, -0.055 - Math.abs(Math.sin((i * Math.PI) / 12)) * 0.012, Math.sin((i * 2 * Math.PI) / 12) * 0.055 + 0.05));
       return g(...pearls);
     },
   },
   diamond_necklace: {
     bone: 'neck',
     build: () =>
-      g(at(M.torus(0.052, 0.0028, 0xcccccc), 0, -0.025, 0, Math.PI / 2.2), at(M.octa(0.014, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.4 }), 0, -0.07, 0.045)),
+      g(at(M.torus(0.058, 0.0032, 0xcccccc), 0, -0.05, 0.05, Math.PI / 2.2), at(M.octa(0.015, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.4 }), 0, -0.1, 0.095)),
   },
   // ── 손에 드는 것 ──
   wand: {
     bone: 'rightHand',
     build: () =>
-      at(g(at(M.cylinder(0.007, 0.007, 0.2, C.brown), 0, 0.06, 0), at(M.octa(0.028, C.gold, { emissive: 0xcfa32e, emissiveIntensity: 0.6 }), 0, 0.18, 0)), 0, -0.02, 0.01, 0.4, 0, 0.25),
+      at(g(at(M.cylinder(0.007, 0.007, 0.2, C.brown), 0, 0.06, 0), at(M.octa(0.028, C.gold, { emissive: 0xcfa32e, emissiveIntensity: 0.6 }), 0, 0.18, 0)), 0, -0.08, 0.02, 0.35, 0, 0.5),
   },
   icecream: {
     bone: 'leftHand',
     build: () =>
-      at(g(at(M.cone(0.028, 0.08, C.straw), 0, 0, 0, Math.PI), at(M.sphere(0.032, C.softPink), 0, 0.055, 0), at(M.sphere(0.01, C.red), 0, 0.085, 0)), 0, -0.03, 0.02, 0.3, 0, -0.2),
+      at(g(at(M.cone(0.028, 0.08, C.straw), 0, 0, 0, Math.PI), at(M.sphere(0.032, C.softPink), 0, 0.055, 0), at(M.sphere(0.01, C.red), 0, 0.085, 0)), 0, -0.09, 0.025, 0.3, 0, -0.5),
   },
   umbrella: {
     bone: 'rightHand',
     build: () =>
-      at(g(at(M.cylinder(0.006, 0.006, 0.3, C.brown), 0, 0.1, 0), at(M.cone(0.15, 0.08, C.yellow), 0, 0.28, 0), at(M.sphere(0.01, C.pink), 0, 0.33, 0)), 0, -0.02, 0.01, 0.25, 0, 0.2),
+      at(g(at(M.cylinder(0.006, 0.006, 0.3, C.brown), 0, 0.1, 0), at(M.cone(0.15, 0.08, C.yellow), 0, 0.28, 0), at(M.sphere(0.01, C.pink), 0, 0.33, 0)), 0, -0.08, 0.02, 0.25, 0, 0.45),
   },
   // ── 소품/가방 ──
   balloon: {
@@ -184,21 +186,22 @@ export const PROPS: Record<string, PropDef> = {
   // ── 옷 (정적 포즈에서 통하는 리지드 의류 — 진짜 스킨드 의상은 B-2 VRoid 에셋) ──
   tutu: {
     bone: 'hips',
+    hideMats: ['Bottoms_01'],
     build: () =>
       at(g(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.185, 0.1, 28, 1, true), mat(0xffb3d1, { side: THREE.DoubleSide })), at(M.torus(0.1, 0.012, C.pink), 0, 0.05, 0, Math.PI / 2)), 0, -0.06, 0),
   },
   cape: {
     bone: 'chest',
     build: () => {
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.42, 24, 1, true), mat(C.red, { side: THREE.DoubleSide }));
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.62, 24, 1, true), mat(C.red, { side: THREE.DoubleSide }));
       cone.scale.z = 0.45;
-      return at(g(at(cone, 0, -0.1, -0.05), at(M.torus(0.05, 0.012, C.gold), 0, 0.11, 0.01, Math.PI / 2.2)), 0, 0, -0.02);
+      return at(g(at(cone, 0, -0.18, -0.09), at(M.torus(0.045, 0.011, C.gold), 0, 0.16, 0.07, Math.PI / 2.2)), 0, 0, -0.02);
     },
   },
   scarf: {
     bone: 'neck',
     build: () =>
-      g(at(M.torus(0.055, 0.02, C.mint), 0, -0.02, 0, Math.PI / 2.1), at(M.box(0.045, 0.14, 0.02, C.mint), 0.03, -0.1, 0.05, 0, 0, 0.12)),
+      g(at(M.torus(0.066, 0.028, C.mint), 0, -0.04, 0.045, Math.PI / 2.1), at(M.box(0.052, 0.16, 0.026, C.mint), 0.035, -0.13, 0.105, 0, 0, 0.12)),
   },
   // ── 바닥 (world) ──
   flower_rug: {

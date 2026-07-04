@@ -89,6 +89,21 @@ function VrmModel({ items }: { items: WornItem[] }) {
       holder.userData = obj.userData; // spin/bob 애니메이션 플래그 승계
       mounted.current.set(key, holder);
     }
+
+    // 기본 의상 교체: 착용 프롭의 hideMats에 따라 VRM 의상 머티리얼을 숨긴다
+    // (예: 튜튜 착용 → 기본 반바지 'Bottoms_01_CLOTH' 숨김).
+    // combineSkeletons가 프리미티브를 병합해 material이 배열일 수 있으므로
+    // 메시가 아닌 "머티리얼 단위" visible로 제어한다 (_CLOTH만).
+    const hidePrefixes = [...wanted].flatMap((k) => PROPS[k]?.hideMats ?? []);
+    vrm.scene.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const m of mats) {
+        if (!m || typeof m.name !== 'string' || !m.name.includes('_CLOTH')) continue;
+        m.visible = !hidePrefixes.some((h) => m.name.startsWith(h));
+      }
+    });
   }, [items, vrm]);
 
   // 스프링본 물리 + 프롭 애니메이션 (천사링 회전, 풍선 둥실)
