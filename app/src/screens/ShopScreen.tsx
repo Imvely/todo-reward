@@ -26,25 +26,8 @@ import {
   type InventoryItem,
   type ShopItem,
 } from '../api';
+import { AvatarView, CATEGORY_LABEL, emojiOf } from '../components/AvatarView';
 import { colors, font, radius, shadow, space } from '../theme';
-
-const CATEGORY_LABEL: Record<string, string> = {
-  hair: '헤어',
-  top: '상의',
-  bottom: '하의',
-  dress: '원피스',
-  set: '셋업',
-  shoes: '신발',
-  socks: '양말',
-  sunglasses: '선글라스',
-  accessory: '액세서리',
-  bag: '가방',
-  background: '배경',
-  pet: '펫',
-  misc: '소품',
-};
-
-const emojiOf = (url: string) => (url.startsWith('emoji:') ? url.slice(6) : '🎁');
 
 // 원피스↔상·하의 동시 착용 불가 — 서버(services/shop.py)와 같은 규칙을 미리보기에도 적용
 const CONFLICTS: Record<string, string[]> = {
@@ -167,8 +150,6 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
     else groups.push({ category: it.category, items: [it] });
   }
 
-  const bg = tryOn.background;
-
   return (
     <View style={styles.rootWrap}>
       <ScrollView style={styles.root} contentContainerStyle={styles.content}>
@@ -235,27 +216,14 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
             ))}
           </View>
 
-          {/* 우: 내 아바타 미리보기 + 구매 */}
+          {/* 우: 내 아바타 미리보기 + 구매 — 아이템이 몸 위에 실제로 입혀진다 */}
           <View style={styles.previewCol}>
             <View style={styles.preview}>
-              {bg ? <Text style={styles.previewBg}>{emojiOf(bg.image_url)}</Text> : null}
               <Text style={styles.previewTitle}>내 아바타</Text>
-              <Text style={styles.avatarBase}>🧍‍♀️</Text>
-              {wornItems.filter((it) => it.category !== 'background').length === 0 && !bg ? (
+              <AvatarView items={wornItems} size="small" />
+              {wornItems.length === 0 ? (
                 <Text style={styles.previewHint}>아이템을 눌러{'\n'}입혀보세요</Text>
-              ) : (
-                <View style={styles.slots}>
-                  {wornItems
-                    .filter((it) => it.category !== 'background')
-                    .sort((x, y) => x.layer_z - y.layer_z)
-                    .map((it) => (
-                      <Pressable key={it.id} onPress={() => toggleTryOn(it)} style={styles.slot}>
-                        <Text style={styles.slotEmoji}>{emojiOf(it.image_url)}</Text>
-                        <Text style={styles.slotLabel}>{CATEGORY_LABEL[it.category]}</Text>
-                      </Pressable>
-                    ))}
-                </View>
-              )}
+              ) : null}
             </View>
 
             {toBuy.length > 0 ? (

@@ -43,8 +43,13 @@
 - [x] 옷장/착용: 카테고리당 1개 equipped (부분 유니크 인덱스, §6-6 테스트) — 2026-07-04 밤
       PATCH /inventory/{id}/equip (같은 카테고리 + 원피스↔상·하의 자동 해제, services/shop.set_equipped).
       테스트 4개(총 37 pass). 상점 미리보기가 서버 착장과 동기화 — 구매 시 자동 착용 저장, 새로고침 유지 검증.
-- [ ] 아바타 레이어 렌더링 (DiceBear 등 무료 에셋으로 시작, SPEC §3.4)
-- [ ] 아바타 룸 + 캡처 저장
+- [~] 아바타 레이어 렌더링 — AvatarView 공용 컴포넌트로 기반 마련 (emoji 플레이스홀더, layer_z 정렬).
+- [ ] ★ 3D 아바타 (VRM) — TECH_DESIGN §7 설계 확정 (2026-07-04, 조사: docs/research/avatar-3d-research.md)
+  - [x] B-0 스파이크 — 2026-07-04 저녁 (AvatarStage.web/.native 분리, 샘플 VRM 렌더+팔내림 포즈+드래그 회전+3D PNG 캡처. Expo 웹 968모듈 번들 OK, 에러 0)
+  - [ ] B-1: shop_items.asset_ref 마이그레이션 + 메시 가시성 토글 + 아바타 룸 3D 전환(2D 폴백)
+  - [ ] B-2: VRoid Studio로 캐릭터·의상 에셋 제작 + 노드 매핑 (스타일은 사용자와 결정 [미정])
+  - [ ] B-3: 상점 시착 3D화, idle 애니메이션, 네이티브 WebView
+- [x] 아바타 룸 + 캡처 저장 — 2026-07-04 심야 (AvatarRoomScreen: 착장 무대 + PNG 캡처 다운로드(웹 canvas, 네이티브는 Phase 5에 view-shot) + 상점 바로가기. 오늘 화면 헤더 🧍‍♀️ 버튼 진입)
 - [x] ★ 일요일 결산 크론: 캡전환 + 멱등성 (TECH_DESIGN §4.3, §6-4 테스트) — 2026-07-04 심야
       services/settlement.py(500 미만 이월·100단위·B만 차감·(user,주차) UNIQUE 멱등), POST /internal/settle(비일요일 no-op, 매일 돌아도 안전), §6-4 테스트 11개 — 총 48 pass.
 - [x] B상점(적립 통장) 화면 + GET /coins — 2026-07-04 심야 (B칩→통장: 코인 잔액·다음 결산 예고(서버 계산 전환/이월)·거래 내역. 헤드리스 검증)

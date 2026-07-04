@@ -10,6 +10,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { getMe, type Me } from './src/api';
 import { AdminScreen } from './src/screens/AdminScreen';
+import { AvatarRoomScreen } from './src/screens/AvatarRoomScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { SavingsScreen } from './src/screens/SavingsScreen';
 import { ShopScreen } from './src/screens/ShopScreen';
@@ -71,14 +72,17 @@ export default function App() {
   );
 }
 
-/** 사용자 화면 흐름 — A·아바타 카드=상점, B·적립 카드=적립 통장, ←로 복귀. */
+/** 사용자 화면 흐름 — A카드=상점, B카드=적립 통장, 아바타=룸, ←로 복귀. */
 function UserFlow({ onLogout }: { onLogout: () => void }) {
-  const [view, setView] = useState<'today' | 'shop' | 'savings'>('today');
+  const [view, setView] = useState<'today' | 'shop' | 'savings' | 'room'>('today');
   if (view === 'shop') {
     return <ShopScreen onBack={() => setView('today')} />;
   }
   if (view === 'savings') {
     return <SavingsScreen onBack={() => setView('today')} />;
+  }
+  if (view === 'room') {
+    return <AvatarRoomScreen onBack={() => setView('today')} onOpenShop={() => setView('shop')} />;
   }
   // key로 복귀 시 재마운트 → 상점/통장에서 바뀐 잔액이 바로 반영된다
   return (
@@ -87,6 +91,7 @@ function UserFlow({ onLogout }: { onLogout: () => void }) {
       onLogout={onLogout}
       onOpenShop={() => setView('shop')}
       onOpenSavings={() => setView('savings')}
+      onOpenRoom={() => setView('room')}
     />
   );
 }

@@ -403,3 +403,76 @@ todo-reward-app/
 4. 결산: 470→전환0/이월470, 730→700/30, 500→500/0. 같은 주 2회 실행 시 무변화.
 5. A상점 구매 → A만 차감, B 불변. 잔액 부족 시 400 + 아무 변화 없음.
 6. 같은 카테고리 두 개 착용 시도 → 기존 것 자동 해제되어 1개만 equipped.
+
+---
+
+## 7. 3D 아바타 (VRM) — 설계
+
+> 배경 조사: docs/research/avatar-3d-research.md (2026-07-04).
+> 목표: 아바타를 실시간 3D로 렌더하고, 착용을 "옷이 몸에 입혀지는" 방식으로.
+> 원칙: 서버·DB의 착용 모델(user_inventory.equipped)은 그대로 — 3D는 표현 계층만 바뀐다.
+
+### 7.1 스택과 플랫폼 전략
+
+- 렌더: `three` + `@react-three/fiber`(R3F) + `@pixiv/three-vrm` (+ `@react-three/drei` OrbitControls)
+- 아바타 포맷: **VRM** (glTF 2.0 확장, 오픈 표준). 제작 도구: **VRoid Studio v2** (무료, 옷 갈아입히기/XWear 공식 지원)
+- **웹 전용으로 시작**: 3D 코드는 `*.web.tsx` 파일에만 두어 네이티브 번들에서 three가
+  아예 임포트되지 않게 한다 (expo-gl 버전 충돌 리스크 회피).
+  네이티브(`*.native.tsx`)는 기존 2D AvatarView 폴백 → Phase 6에서 WebView 임베드로 3D 제공.
+
+### 7.2 착용(의상 스왑) 방식 — "단일 VRM + 메시 가시성 토글"
+
+한 VRM 파일에 베이스 몸 + 카탈로그 의상 전부를 레이어로 포함시키고,
+런타임에 착용된 것만 `visible=true`로 켠다. (소규모 고정 카탈로그에 최적)
+
+- **에셋 제작 (VRoid Studio)**:
+  1. 캐릭터 1구 제작, 판매할 의상·헤어·액세서리를 전부 같은 모델에 착장.
+  2. VRM 내보내기 시 **"투명 메시 삭제" 해제, 머티리얼/메시 병합 해제** → 아이템별 개별 메시 유지.
+  3. 내보낸 VRM을 스크립트로 열어 노드명 목록 추출 → 아이템↔노드 매핑 확정.
+- **DB**: `shop_items.asset_ref TEXT NULL` 추가 (예: 'vrm:Tops_Hoodie01' — 노드명 프리픽스).
+  image_url은 2D 썸네일/폴백으로 유지. asset_ref가 NULL인 아이템은 3D 무대에서 미표현(2D 뱃지만).
+- **런타임 토글**:
+  ```ts
+  const wornRefs = new Set(equippedItems.map(i => i.asset_ref));   // 서버 equipped 기준
+  vrm.scene.traverse(node => {
+    const ref = findAssetRef(node.name);      // 노드명 → 카탈로그 asset_ref 매칭
+    if (ref) node.visible = wornRefs.has(ref); // 의상 메시만 켜고 끄기 (몸은 항상 표시)
+  });
+  ```
+- 확장(나중): 아이템 수가 커지면 아이템별 개별 GLB를 공용 스켈레톤에 부착하는
+  스킨드 메시 어태치 방식(gltf-avatar-threejs 패턴)으로 전환. DB 구조는 동일.
+
+### 7.3 컴포넌트 구조
+
+```
+app/src/components/
+├── AvatarStage.web.tsx    # R3F Canvas + VRM 로드/토글/회전/캡처 (three는 여기서만 import)
+├── AvatarStage.native.tsx # 2D AvatarView 폴백 (동일 props)
+└── AvatarView.tsx         # 기존 2D 이모지 레이어 (폴백·썸네일용 유지)
+```
+
+- props 계약(공용): `{ items: WornItem[], size, onReady?(capture: () => string|null) }`
+  — 호출부(룸·상점)는 웹/네이티브 구분을 모른다.
+- VRM 로드: `useLoader(GLTFLoader, url, l => l.register(p => new VRMLoaderPlugin(p)))`
+  → `gltf.userData.vrm`. 매 프레임 `vrm.update(delta)` (스프링본 물리 — 치마·리본 흔들림 포함).
+- 회전: OrbitControls (수평 회전만 허용, 줌 제한).
+- 캡처: Canvas `gl={{ preserveDrawingBuffer: true }}` → `canvas.toDataURL('image/png')`
+  → 기존 다운로드 헬퍼 재사용 (아바타 룸 "이미지로 저장"이 3D 스냅샷이 된다).
+
+### 7.4 에셋 서빙·성능
+
+- `app/public/avatar/base.vrm` — Expo 웹 정적 서빙. (클라우드 전환 시 CDN/Supabase Storage)
+- VRM 5~15MB 예상 → 로딩 스피너 필수, `VRMUtils.removeUnnecessaryVertices/Joints`로 경량화.
+- three(≈150KB gzip)+VRM 로더는 웹 번들에만 포함 (.web.tsx 분리로 보장).
+
+### 7.5 단계별 적용 계획
+
+| 단계 | 내용 | 완료 기준 |
+|---|---|---|
+| B-0 스파이크 | three-vrm 샘플 VRM으로 R3F 렌더 + 회전 + 캡처를 Expo 웹에서 검증 | 아바타 룸에 3D 모델이 돌고 PNG 저장됨 |
+| B-1 토글 배선 | asset_ref 마이그레이션 + 노드 가시성 토글 + 룸 3D 전환(2D 폴백 유지) | equipped 변경이 3D에 반영 |
+| B-2 에셋 제작 | VRoid로 우리 캐릭터 + 카탈로그 의상 제작·매핑 (스타일은 사용자와 결정) | 상점 아이템이 실제 3D 의상으로 |
+| B-3 확장 | 상점 시착 3D화, idle 애니메이션, 네이티브 WebView | — |
+
+리스크: VRoid 재내보내기 시 노드명 변동 → 내보내기 후 매핑 추출 스크립트로 자동 재생성.
+아바타 스타일(§13-0 색상·목업과 함께)은 `[미정]` — B-2에서 사용자와 결정.

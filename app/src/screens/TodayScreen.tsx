@@ -30,7 +30,7 @@ import { MissionCard } from '../components/MissionCard';
 import { PointPop } from '../components/PointPop';
 import { ProgressRing } from '../components/ProgressRing';
 import { WalletChip } from '../components/WalletChip';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
 
 let popSeq = 0;
 
@@ -38,10 +38,12 @@ export function TodayScreen({
   onLogout,
   onOpenShop,
   onOpenSavings,
+  onOpenRoom,
 }: {
   onLogout: () => void;
   onOpenShop: () => void;
   onOpenSavings: () => void;
+  onOpenRoom: () => void;
 }) {
   const [me, setMe] = useState<Me | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -147,9 +149,14 @@ export function TodayScreen({
           <Text style={styles.hello}>오늘도 한 걸음</Text>
           <Text style={styles.sub}>미션을 끝내고 포인트를 모아요</Text>
         </View>
-        <TouchableOpacity onPress={logout} hitSlop={8}>
-          <Text style={styles.logout}>로그아웃</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={onOpenRoom} hitSlop={8} style={styles.roomBtn}>
+            <Text style={styles.roomBtnEmoji}>🧍‍♀️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={logout} hitSlop={8}>
+            <Text style={styles.logout}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 지갑 + 포인트 팡 */}
@@ -284,6 +291,17 @@ const styles = StyleSheet.create({
   hello: { fontFamily: font.display, fontSize: 26, color: colors.ink },
   sub: { fontFamily: font.body, fontSize: 13, color: colors.subtext, marginTop: 2 },
   logout: { fontFamily: font.bodyMedium, fontSize: 13, color: colors.subtext },
+  headerRight: { alignItems: 'flex-end', gap: space(2) },
+  roomBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.pill,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow.card,
+  },
+  roomBtnEmoji: { fontSize: 19 },
   wallets: { flexDirection: 'row', gap: space(3), marginTop: space(5) },
   pendingCard: {
     flexDirection: 'row',
