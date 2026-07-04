@@ -34,6 +34,9 @@ class ShopItem(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     price: Mapped[int] = mapped_column(Integer, nullable=False)
     image_url: Mapped[str] = mapped_column(Text, nullable=False)
+    # 3D 적용 참조 (TECH_DESIGN §7.2): 'prop:cap'(뼈 부착 프롭) / 'mat:Tops_01'(VRM 머티리얼 토글)
+    # / 'fx:sparkle_gold'(파티클) / 'env:sakura'(무대 배경). NULL = 3D 미지원 → 판매 비활성 대상.
+    asset_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
     # 아바타 레이어 쌓는 순서(z-index). 배경 < 몸 < 하의 < 상의 < 헤어 < 액세서리 순.
     layer_z: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))

@@ -104,6 +104,7 @@ export type ShopItem = {
   name: string;
   price: number;
   image_url: string;
+  asset_ref: string | null; // 3D 적용 참조 ('prop:*'/'fx:*'/'env:*'/'mat:*')
   layer_z: number;
 };
 
@@ -114,6 +115,7 @@ export type InventoryItem = {
   equipped: boolean;
   name: string;
   image_url: string;
+  asset_ref: string | null;
   price: number;
   layer_z: number;
 };

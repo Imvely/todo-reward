@@ -75,11 +75,14 @@ def purchase_item(db: Session, user: User, item_id: uuid.UUID) -> PurchaseResult
     )
 
 
-# 원피스와 상·하의는 동시에 입을 수 없다 (TECH_DESIGN §2 주석 — 서비스 로직 처리).
+# 동시 착용 불가 조합 (docs/research/item-catalog-plan.md).
+# 원피스↔상·하의 (TECH_DESIGN §2 주석), 안경↔선글라스 (같은 눈 부위).
 _CONFLICTS: dict[str, tuple[str, ...]] = {
     "dress": ("top", "bottom"),
     "top": ("dress",),
     "bottom": ("dress",),
+    "glasses": ("sunglasses",),
+    "sunglasses": ("glasses",),
 }
 
 

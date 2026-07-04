@@ -13,24 +13,39 @@ export type WornItem = {
   category: string;
   name: string;
   image_url: string;
+  asset_ref?: string | null; // 3D 적용 참조 (AvatarStage.web이 사용)
   layer_z: number;
 };
 
 export const CATEGORY_LABEL: Record<string, string> = {
   hair: '헤어',
+  hat: '모자',
+  ears: '동물 귀',
+  halo: '머리 위',
+  glasses: '안경',
+  sunglasses: '선글라스',
+  face: '얼굴 스티커',
+  necklace: '목걸이',
   top: '상의',
   bottom: '하의',
   dress: '원피스',
   set: '셋업',
-  shoes: '신발',
   socks: '양말',
-  sunglasses: '선글라스',
+  shoes: '신발',
   accessory: '액세서리',
   bag: '가방',
-  background: '배경',
-  pet: '펫',
+  held: '손에 쏙',
+  wings: '날개',
+  tail: '꼬리',
   misc: '소품',
+  pet: '펫',
+  effect: '이펙트',
+  floor: '바닥',
+  background: '배경',
 };
+
+/** 상점 진열 순서 — 머리부터 발끝, 그다음 특수 아이템 (item-catalog-plan.md). */
+export const CATEGORY_ORDER = Object.keys(CATEGORY_LABEL);
 
 export const emojiOf = (url: string) => (url.startsWith('emoji:') ? url.slice(6) : '🎁');
 
@@ -40,8 +55,17 @@ export const STAGE = { w: 240, h: 300 };
 export const BASE = { x: 120, y: 170, size: 150 };
 export const ANCHORS: Record<string, { x: number; y: number; size: number }> = {
   background: { x: 120, y: 145, size: 230 }, // 뒤에 크게, 흐리게
+  floor: { x: 120, y: 254, size: 90 }, // 발 아래 (몸 뒤, layer_z -8)
+  wings: { x: 120, y: 165, size: 92 }, // 등 뒤 (layer_z -5)
+  tail: { x: 160, y: 214, size: 36 }, // 엉덩이 옆 (layer_z -3)
   hair: { x: 120, y: 92, size: 44 }, // 머리 위
-  sunglasses: { x: 120, y: 120, size: 30 }, // 얼굴
+  ears: { x: 120, y: 82, size: 40 }, // 머리 꼭대기 (고양이·토끼 귀)
+  hat: { x: 120, y: 76, size: 46 }, // 모자 — 귀보다 위
+  halo: { x: 120, y: 56, size: 32 }, // 머리 위 링 — 맨 꼭대기
+  glasses: { x: 120, y: 120, size: 30 }, // 눈
+  sunglasses: { x: 120, y: 120, size: 30 }, // 눈 (glasses와 충돌 카테고리)
+  face: { x: 134, y: 128, size: 16 }, // 볼 스티커
+  necklace: { x: 120, y: 150, size: 24 }, // 목
   accessory: { x: 149, y: 98, size: 28 }, // 머리 옆 (리본·왕관)
   top: { x: 120, y: 172, size: 46 }, // 가슴
   set: { x: 120, y: 178, size: 46 },
@@ -50,7 +74,9 @@ export const ANCHORS: Record<string, { x: number; y: number; size: number }> = {
   socks: { x: 120, y: 228, size: 26 },
   shoes: { x: 120, y: 243, size: 30 }, // 발
   bag: { x: 76, y: 186, size: 38 }, // 옆구리
+  held: { x: 70, y: 198, size: 36 }, // 손
   pet: { x: 186, y: 232, size: 42 }, // 발치 옆
+  effect: { x: 174, y: 140, size: 44 }, // 몸 주변 반짝임
   misc: { x: 192, y: 88, size: 38 }, // 공중 (풍선)
 };
 

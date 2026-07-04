@@ -41,6 +41,7 @@ def _wardrobe(db: Session, user_id: uuid.UUID) -> list[InventoryItemOut]:
             equipped=inv.equipped,
             name=item.name,
             image_url=item.image_url,
+            asset_ref=item.asset_ref,
             price=item.price,
             layer_z=item.layer_z,
         )

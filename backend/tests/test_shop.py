@@ -166,6 +166,21 @@ def test_equip_dress_unequips_top_bottom(db_session):
     assert _equipped_cats(db_session, u) == ["top"]
 
 
+def test_equip_glasses_unequips_sunglasses(db_session):
+    """안경↔선글라스 — 같은 눈 부위라 동시 착용 불가."""
+    u = _mk_user(db_session, a=100)
+    sg = _mk_item(db_session, price=10, category="sunglasses", name="선글라스")
+    gl = _mk_item(db_session, price=10, category="glasses", name="안경")
+    isg, igl = _buy(db_session, u, sg), _buy(db_session, u, gl)
+
+    set_equipped(db_session, u, isg, True)
+    set_equipped(db_session, u, igl, True)  # 안경 → 선글라스 자동 해제
+    assert _equipped_cats(db_session, u) == ["glasses"]
+
+    set_equipped(db_session, u, isg, True)  # 선글라스 → 안경 자동 해제
+    assert _equipped_cats(db_session, u) == ["sunglasses"]
+
+
 def test_unequip(db_session):
     u = _mk_user(db_session, a=100)
     h = _mk_item(db_session, price=10, category="hair")

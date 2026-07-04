@@ -11,6 +11,7 @@ class ShopItemOut(BaseModel):
     name: str
     price: int
     image_url: str
+    asset_ref: str | None  # 3D 적용 참조 (TECH_DESIGN §7.2)
     layer_z: int
 
     model_config = {"from_attributes": True}
@@ -41,5 +42,6 @@ class InventoryItemOut(BaseModel):
     equipped: bool
     name: str
     image_url: str
+    asset_ref: str | None
     price: int
     layer_z: int

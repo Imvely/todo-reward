@@ -84,14 +84,31 @@ export function AvatarRoomScreen({
       <View style={styles.stage}>
         <AvatarStage
           items={worn}
-          height={360}
+          height={480}
           onReady={(fn) => setCapture3d(() => fn)}
         />
-        <Text style={styles.stageHint}>드래그해서 돌려보세요</Text>
-        {worn.length === 0 ? (
-          <Text style={styles.emptyHint}>아직 착용한 아이템이 없어요. 상점에서 꾸며보세요!</Text>
-        ) : null}
+        <View style={styles.stageHintChip}>
+          <Text style={styles.stageHintText}>↻ 드래그해서 돌려보세요</Text>
+        </View>
       </View>
+
+      {/* 오늘 착장 — 3D 의상 반영(B-2) 전까지 착용 목록을 함께 보여준다 */}
+      {worn.length > 0 ? (
+        <View style={styles.wornRow}>
+          {worn.map((it) => (
+            <View key={it.inventory_id} style={styles.wornChip}>
+              <Text style={styles.wornEmoji}>
+                {it.image_url.startsWith('emoji:') ? it.image_url.slice(6) : '🎁'}
+              </Text>
+              <Text style={styles.wornName} numberOfLines={1}>
+                {it.name}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.emptyHint}>아직 착용한 아이템이 없어요. 상점에서 꾸며보세요!</Text>
+      )}
 
       {/* 액션 */}
       <View style={styles.actions}>
@@ -134,20 +151,38 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radius.lg,
     marginTop: space(5),
-    paddingVertical: space(6),
-    paddingHorizontal: space(4),
-    alignItems: 'center',
-    minHeight: 320,
-    justifyContent: 'center',
+    overflow: 'hidden',
     ...shadow.card,
   },
-  stageHint: {
-    fontFamily: font.body,
-    fontSize: 11,
-    color: colors.subtext,
-    textAlign: 'center',
-    marginTop: space(2),
+  stageHintChip: {
+    position: 'absolute',
+    bottom: space(3),
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
   },
+  stageHintText: { fontFamily: font.bodyMedium, fontSize: 11, color: colors.inkSoft },
+  wornRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space(2),
+    marginTop: space(3),
+    justifyContent: 'center',
+  },
+  wornChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(1.5),
+    backgroundColor: colors.card,
+    borderRadius: radius.pill,
+    paddingVertical: space(1.5),
+    paddingHorizontal: space(3),
+    ...shadow.card,
+  },
+  wornEmoji: { fontSize: 16 },
+  wornName: { fontFamily: font.bodyMedium, fontSize: 12, color: colors.inkSoft, maxWidth: 90 },
   emptyHint: {
     fontFamily: font.body,
     fontSize: 13,

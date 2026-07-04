@@ -13,7 +13,7 @@ export type AvatarStageProps = {
   onReady?: (capture: () => string | null) => void;
 };
 
-export function AvatarStage({ items, height = 340, onReady }: AvatarStageProps) {
+export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) {
   // 네이티브 캡처는 추후 view-shot — 지금은 미지원 신호(null)
   onReady?.(() => null);
   return (
