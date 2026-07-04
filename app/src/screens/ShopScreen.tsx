@@ -37,8 +37,6 @@ const CONFLICTS: Record<string, string[]> = {
   dress: ['top', 'bottom'],
   top: ['dress'],
   bottom: ['dress'],
-  glasses: ['sunglasses'],
-  sunglasses: ['glasses'],
   hat: ['ears'],
   ears: ['hat'],
 };

@@ -81,8 +81,6 @@ _CONFLICTS: dict[str, tuple[str, ...]] = {
     "dress": ("top", "bottom"),
     "top": ("dress",),
     "bottom": ("dress",),
-    "glasses": ("sunglasses",),
-    "sunglasses": ("glasses",),
     "hat": ("ears",),
     "ears": ("hat",),
 }

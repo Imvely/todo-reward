@@ -17,6 +17,7 @@ import * as THREE from 'three';
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+import { makeEnvTexture } from './avatarEnvs.web';
 import { disposeProp, ENV_GRADIENTS, PROPS } from './avatarProps.web';
 import type { WornItem } from './AvatarView';
 
@@ -128,13 +129,7 @@ function EnvDecor({ envKey }: { envKey: string }) {
   const decor = useMemo(() => {
     const grp = new THREE.Group();
     if (envKey === 'night') {
-      // 달
-      const moon = new THREE.Mesh(
-        new THREE.SphereGeometry(0.16, 24, 16),
-        std(0xfff3dc, { emissive: 0xffe9b8, emissiveIntensity: 0.9 }),
-      );
-      moon.position.set(-0.72, 1.95, -1.1);
-      grp.add(moon);
+      // (달·별은 배경 일러스트에 그림 — 3D는 움직이는 요소만)
       // 별똥별 2개 — 대각선으로 떨어지며 반복
       for (let i = 0; i < 2; i++) {
         const shoot = new THREE.Group();
@@ -222,12 +217,8 @@ function EnvDecor({ envKey }: { envKey: string }) {
       });
       grp.add(tree);
     } else if (envKey === 'rainbow') {
-      [0xff8fa9, 0xffdf6b, 0x8fe3c0].forEach((color, i) => {
-        const arc = new THREE.Mesh(new THREE.TorusGeometry(1.05 + i * 0.09, 0.035, 10, 48, Math.PI), std(color, { emissive: color, emissiveIntensity: 0.25 }));
-        arc.position.set(0, 0.25, -1.3);
-        grp.add(arc);
-      });
-      // 아치 양끝 구름
+      // (무지개 아치는 배경 일러스트에 그림)
+      // 둥실대는 구름
       [-1.1, 1.1].forEach((x) => {
         const cloud = new THREE.Group();
         [
@@ -282,6 +273,24 @@ function EnvDecor({ envKey }: { envKey: string }) {
         grp.add(wave);
       }
     }
+    if (envKey === 'sakura') {
+      for (let i = 0; i < 12; i++) {
+        const petal = new THREE.Mesh(
+          new THREE.SphereGeometry(0.02, 8, 6),
+          std(i % 2 ? 0xffafcb : 0xffd2e1, { side: THREE.DoubleSide }),
+        );
+        petal.scale.set(1, 0.45, 0.7);
+        petal.userData.anim = { type: 'petal', phase: i / 12, x0: -1.1 + (i % 6) * 0.44 };
+        grp.add(petal);
+      }
+    }
+    if (envKey === 'xmas') {
+      for (let i = 0; i < 16; i++) {
+        const flake = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), std(0xffffff));
+        flake.userData.anim = { type: 'snow', phase: i / 16, x0: -1.2 + (i % 8) * 0.34 };
+        grp.add(flake);
+      }
+    }
     return grp;
   }, [envKey]);
 
@@ -319,6 +328,23 @@ function EnvDecor({ envKey }: { envKey: string }) {
         o.position.z = -0.75 + k * 0.45; // 해변으로 밀려왔다 빠짐
         const m = (o as THREE.Mesh).material as THREE.Material & { opacity?: number };
         if (m) m.opacity = 0.18 + (1 - k) * 0.3;
+      } else if (anim.type === 'petal') {
+        const cycle = 6;
+        const k = ((t * 0.9 + (anim.phase ?? 0) * cycle) % cycle) / cycle;
+        o.position.set(
+          ((anim as { x0?: number }).x0 ?? 0) + Math.sin(t * 1.7 + (anim.phase ?? 0) * 9) * 0.22,
+          1.95 - k * 1.9,
+          -0.5 - ((anim.phase ?? 0) % 0.4),
+        );
+        o.rotation.set(t * 2 + (anim.phase ?? 0) * 5, 0, t * 1.4);
+      } else if (anim.type === 'snow') {
+        const cycle = 7;
+        const k = ((t * 0.8 + (anim.phase ?? 0) * cycle) % cycle) / cycle;
+        o.position.set(
+          ((anim as { x0?: number }).x0 ?? 0) + Math.sin(t + (anim.phase ?? 0) * 7) * 0.15,
+          2.1 - k * 2.05,
+          -0.55 - ((anim.phase ?? 0) % 0.5),
+        );
       } else if (anim.type === 'sway') {
         o.rotation.y = Math.sin(t * 1.6 + (anim.phase ?? 0)) * 0.08;
       } else if (anim.type === 'bob') {
@@ -337,41 +363,15 @@ function EnvDecor({ envKey }: { envKey: string }) {
     });
   });
 
-  return (
-    <>
-      <primitive object={decor} />
-      {envKey === 'sakura' ? (
-        <>
-          <Sparkles count={70} scale={[2.4, 2.2, 1.6]} position={[0, 1.2, -0.3]} size={6} speed={0.25} color="#FFAFCB" />
-          <Sparkles count={30} scale={[2, 2, 1.2]} position={[0, 1.1, -0.2]} size={3} speed={0.15} color="#FFFFFF" />
-        </>
-      ) : null}
-      {envKey === 'ocean' ? (
-        <Sparkles count={50} scale={[2.2, 2, 1.4]} position={[0, 1, -0.3]} size={4} speed={0.4} color="#7FD1FF" />
-      ) : null}
-      {envKey === 'night' ? (
-        <Sparkles count={90} scale={[2.6, 2.4, 1.6]} position={[0, 1.4, -0.5]} size={2.5} speed={0.08} color="#FFF6D8" />
-      ) : null}
-      {envKey === 'rainbow' ? (
-        <Sparkles count={40} scale={[2.2, 2, 1.2]} position={[0, 1.2, -0.4]} size={4} speed={0.3} color="#FFE28A" />
-      ) : null}
-      {envKey === 'space' ? (
-        <>
-          <Sparkles count={110} scale={[2.6, 2.6, 1.8]} position={[0, 1.3, -0.6]} size={2.5} speed={0.06} color="#FFFFFF" />
-          <Sparkles count={35} scale={[2.2, 2.2, 1.4]} position={[0, 1.2, -0.5]} size={4} speed={0.12} color="#C9A8FF" />
-        </>
-      ) : null}
-      {envKey === 'xmas' ? (
-        <Sparkles count={80} scale={[2.4, 2.4, 1.6]} position={[0, 1.3, -0.3]} size={3.5} speed={0.5} color="#FFFFFF" />
-      ) : null}
-    </>
-  );
+  return <primitive object={decor} />;
 }
 
 export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) {
-  // 'env:*' — 배경 아이템이 무대 그라데이션을 바꾼다
+  // 'env:*' — 배경 아이템 = 일러스트 배경(360° 실린더) + 3D 소품 + 그라데이션
   const envKey = refsOf(items, 'env:')[0] ?? 'default';
   const fxKeys = refsOf(items, 'fx:');
+  const bgTex = useMemo(() => makeEnvTexture(envKey), [envKey]);
+  useEffect(() => () => bgTex?.dispose(), [bgTex]);
 
   return (
     <View style={{ height, width: '100%', borderRadius: 20, overflow: 'hidden' }}>
@@ -396,7 +396,14 @@ export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) 
         <Suspense fallback={null}>
           <VrmModel items={items} />
         </Suspense>
-        {/* 'env:*' — 배경 전용 데코 (파티클 + 소품) */}
+        {/* 일러스트 배경 — 캐릭터를 360°로 감싸는 실린더에 그림 텍스처 (회전해도 배경 유지) */}
+        {bgTex ? (
+          <mesh position={[0, 1.35, 0]}>
+            <cylinderGeometry args={[2.7, 2.7, 5.4, 48, 1, true]} />
+            <meshBasicMaterial map={bgTex} side={THREE.BackSide} toneMapped={false} />
+          </mesh>
+        ) : null}
+        {/* 'env:*' — 배경 전용 3D 소품 (야자수·파도·별똥별·폭죽·트리 등) */}
         <EnvDecor envKey={envKey} />
         {/* 'fx:*' — 이펙트 아이템 파티클 */}
         {fxKeys.includes('sparkle_gold') ? (

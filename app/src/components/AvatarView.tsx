@@ -22,8 +22,8 @@ export const CATEGORY_LABEL: Record<string, string> = {
   hat: '모자',
   ears: '동물 귀',
   halo: '머리 위',
-  glasses: '안경',
-  sunglasses: '선글라스',
+  glasses: '안경·선글라스',
+  sunglasses: '안경·선글라스', // 구 카테고리 잔존 대비 (glasses로 통합됨)
   face: '얼굴 스티커',
   necklace: '목걸이',
   top: '상의',

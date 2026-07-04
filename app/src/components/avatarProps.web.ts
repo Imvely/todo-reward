@@ -140,18 +140,30 @@ export const PROPS: Record<string, PropDef> = {
       return at(g(...petals, at(M.sphere(0.015, C.yellow), 0, 0, 0.01)), -0.095, 0.14, 0.065, 0, 0, 0.3);
     },
   },
-  // ── 목걸이 (neck) ──
+  // ── 목걸이 (chest 기준 — 가슴 위에 확실히 드리우게, 실측 z 보정) ──
   pearl_necklace: {
-    bone: 'neck',
+    bone: 'chest',
     build: () => {
-      const pearls = Array.from({ length: 11 }, (_, i) => { const a = (i * 2 * Math.PI) / 11; const front = (Math.sin(a) + 1) / 2; return at(M.sphere(0.016, 0xffb7d3, { emissive: 0xff5fa2, emissiveIntensity: 0.5, roughness: 0.25 }), Math.cos(a) * 0.06, -0.05 - front * 0.055, Math.sin(a) * 0.045 + 0.055); });
+      const pearls = Array.from({ length: 11 }, (_, i) => {
+        const a = (i * 2 * Math.PI) / 11;
+        const front = (Math.sin(a) + 1) / 2; // 0=뒤, 1=앞
+        return at(
+          M.sphere(0.018, 0xffb7d3, { emissive: 0xff5fa2, emissiveIntensity: 0.55, roughness: 0.25 }),
+          Math.cos(a) * 0.062,
+          0.155 - front * 0.06,
+          Math.sin(a) * 0.05 + 0.062,
+        );
+      });
       return g(...pearls);
     },
   },
   diamond_necklace: {
-    bone: 'neck',
+    bone: 'chest',
     build: () =>
-      g(at(M.torus(0.058, 0.007, 0x6f7580), 0, -0.055, 0.05, Math.PI / 1.75), at(M.octa(0.028, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.9, roughness: 0.2 }), 0, -0.125, 0.095)),
+      g(
+        at(M.torus(0.06, 0.007, 0x6f7580), 0, 0.145, 0.06, Math.PI / 1.7),
+        at(M.octa(0.03, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.9, roughness: 0.2 }), 0, 0.075, 0.115),
+      ),
   },
   // ── 손에 드는 것 ──
   wand: {

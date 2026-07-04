@@ -42,8 +42,8 @@ CATALOG: list[tuple[str, str, int, str, int]] = [
     ("shoes", "레인부츠", 25, "emoji:🥾", 10),
     ("shoes", "쪼리", 15, "emoji:🩴", 10),
     ("socks", "줄무늬 양말", 12, "emoji:🧦", 8),
-    # ── 눈: 선글라스/안경 (60) — 서로 충돌 ──
-    ("sunglasses", "선글라스", 15, "emoji:🕶️", 60),
+    # ── 눈: 안경·선글라스 한 묶음 (60) — 같은 부위라 자동 교체 ──
+    ("glasses", "선글라스", 15, "emoji:🕶️", 60),
     ("glasses", "동그란 안경", 20, "emoji:👓", 60),
     ("glasses", "물놀이 고글", 22, "emoji:🥽", 60),
     # ── 모자 (68) ──
@@ -57,7 +57,6 @@ CATALOG: list[tuple[str, str, int, str, int]] = [
     ("ears", "토끼 귀", 45, "emoji:🐰", 58),
     # ── 액세서리: 머리 옆 (65) ──
     ("accessory", "리본 머리핀", 10, "emoji:🎀", 65),
-
     ("accessory", "꽃 머리핀", 15, "emoji:🌸", 65),
     # ── 목걸이 (55) ──
     ("necklace", "진주 목걸이", 35, "emoji:📿", 55),
@@ -122,7 +121,7 @@ ASSET_REFS: dict[tuple[str, str], str] = {
     ("hat", "학사모"): "prop:grad_cap",
     ("glasses", "동그란 안경"): "prop:round_glasses",
     ("glasses", "물놀이 고글"): "prop:goggles",
-    ("sunglasses", "선글라스"): "prop:sunglasses",
+    ("glasses", "선글라스"): "prop:sunglasses",
     ("ears", "고양이 귀"): "prop:cat_ears",
     ("ears", "토끼 귀"): "prop:rabbit_ears",
     ("halo", "천사링"): "prop:halo",
@@ -155,6 +154,7 @@ ASSET_REFS: dict[tuple[str, str], str] = {
 # 카테고리 재분류 (부위 교체 그룹 정리): (기존 category, name) → 새 category
 RECATEGORIZE: dict[tuple[str, str], str] = {
     ("accessory", "왕관"): "hat",  # 왕관은 정수리 부위 — 모자끼리 자동 교체되도록
+    ("sunglasses", "선글라스"): "glasses",  # 안경·선글라스 한 묶음 (눈 부위 자동 교체)
 }
 
 
@@ -176,6 +176,7 @@ def seed_shop() -> None:
             ).all():
                 inv.category = new_cat
             print(f"recategorized: {name} {old_cat} -> {new_cat}")
+        db.flush()  # SessionLocal은 autoflush=False — 재분류를 아래 조회에 반영 (중복 생성 방지)
 
         created = 0
         for category, name, price, image_url, layer_z in CATALOG:
