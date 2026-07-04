@@ -18,18 +18,19 @@
 - [x] 시드: 관리자 1 + 사용자 1 + settings 싱글턴 행 — 2026-07-03 (app/seed.py 멱등, bcrypt. settings는 마이그레이션에서 생성)
 - [x] 인증: POST /auth/login (JWT), GET /me (TECH_DESIGN §3) — 2026-07-03 (bcrypt 직접 사용, HTTPBearer 의존성, e2e 검증)
 - [x] 하루 경계 헬퍼: settings.day_boundary_time 기반 "논리적 오늘" 계산 (모든 날짜 판정의 단일 지점) — 2026-07-03 (services/day_boundary.py, 단위 테스트 7)
-- [ ] TODO 조회/정렬 API: GET /todos, PATCH /todos/reorder
-- [ ] 관리자 TODO CRUD: POST/PATCH/DELETE /admin/todos
-- [ ] ★ 토글 서비스: 토글 ON (TECH_DESIGN §4.1) — 미션 +5, 완주 +10, 연속 +10×(N−1), daily_bonus_log
-- [ ] ★ 토글 서비스: 토글 OFF (TECH_DESIGN §4.2) — 정확 회수 + streak 되돌림
-- [ ] ★ TECH_DESIGN §6 시나리오 테스트 1~3 (미션/보너스/회수)
+- [x] TODO 조회/정렬 API: GET /todos, PATCH /todos/reorder — 2026-07-04 (resolve_todo_owner로 2인 구조 대상 해석, reorder 원자적)
+- [x] 관리자 TODO CRUD: POST/PATCH/DELETE /admin/todos — 2026-07-04 (순수 CRUD, sort_order=max+1)
+- [x] ★ 토글 서비스: 토글 ON (TECH_DESIGN §4.1) — 2026-07-04 (미션+5, 완주+10, 연속+10×(N−1), daily_bonus_log)
+- [x] ★ 토글 서비스: 토글 OFF (TECH_DESIGN §4.2) — 2026-07-04 (정확 회수 + streak 되돌림, clamp 완화규칙)
+- [x] ★ TECH_DESIGN §6 시나리오 테스트 1~3 — 2026-07-04 (잔액-원장 일치 검증)
+- [x] ★ 하루 마감 크론: 완주·연속 보너스 지급 (TECH_DESIGN §4.6, `POST /internal/close_day`, 멱등) — 2026-07-04 (설계 변경: 완주 보너스를 토글 즉시→하루 경계로 이동. services/day_close.py, test_day_close.py. 총 25 pass)
 
 ## Phase 2 — 사용자 앱 핵심 (로컬)
 
-- [ ] Expo 프로젝트 셋업 (app/, RN + Expo, 웹 포함)
-- [ ] 로그인 + 오늘의 TODO 목록 + 완료 토글 UI
-- [ ] 포인트 잔액 표시 + 서버 awarded 기반 "팡" 연출 (클라이언트 자체 계산 금지)
-- [ ] 드래그앤드롭 우선순위 정렬
+- [x] Expo 프로젝트 셋업 (app/, RN + Expo, 웹 포함) — 2026-07-04 (SDK 57, blank-TS, react-native-svg·AsyncStorage·Jua/NotoSansKR 폰트)
+- [x] 로그인 + 오늘의 TODO 목록 + 완료 토글 UI — 2026-07-04 (LoginScreen·TodayScreen, 헤드리스 브라우저로 렌더 검증)
+- [x] 포인트 잔액 표시 + 서버 awarded 기반 "팡" 연출 (클라이언트 자체 계산 금지) — 2026-07-04 (진행 링 + PointPop, balances는 서버 응답만 반영)
+- [x] 우선순위 정렬 UI — 2026-07-04 ("순서 바꾸기" 모드 + ▲▼로 순서만 변경, PATCH /todos/reorder 반영·검증). 참고: SPEC은 드래그앤드롭 명시 → 웹 신뢰성 위해 ▲▼로 구현, 실제 drag는 후속 폴리시로 남김.
 
 ## Phase 3 — 상점과 아바타 (로컬)
 
@@ -41,7 +42,8 @@
 
 ## Phase 4 — 관리자 + 부가기능
 
-- [ ] 관리자 화면: TODO 관리, 출금 처리(POST /admin/withdraw), 설정(streak_reset_days, day_boundary_time)
+- [~] 관리자 화면: TODO 관리, 출금 처리(POST /admin/withdraw), 설정(streak_reset_days, day_boundary_time)
+      → TODO 관리(미션 추가/삭제) 화면 완료 (2026-07-04, AdminScreen + GET /admin/user·/today). 출금·설정은 남음.
 - [ ] 루틴 CRUD + 매일 물질화 크론 (POST /internal/materialize)
 - [ ] TODO 미등록 알림 (GET /admin/alerts)
 - [ ] 추천 검색어 자동완성 (TECH_DESIGN §4.5, pg_trgm)
@@ -61,6 +63,7 @@
 
 ## 사용자 결정 대기 (SPEC `[미정]` — 임의 결정 금지)
 
+- [x] 관리자가 완주 이후 TODO 편집 시 보너스 처리 → **해결(2026-07-04)**: 완주 보너스를 하루 경계(하루 마감 크론 §4.6)에 한 번만 판정·지급하기로 확정. 낮 동안 편집은 자유, 회수 왕복 없음.
 - [ ] 타임존을 고정 KST로 둘지
 - [ ] 루틴을 사용자도 설정 가능하게 할지
 - [ ] 공휴일 데이터 출처 (API vs 수동 등록)
