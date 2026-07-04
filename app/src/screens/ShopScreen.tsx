@@ -34,9 +34,10 @@ import { colors, font, radius, shadow, space } from '../theme';
 
 // 동시 착용 불가 조합 — 서버(services/shop.py)와 같은 규칙을 미리보기에도 적용
 const CONFLICTS: Record<string, string[]> = {
-  dress: ['top', 'bottom'],
-  top: ['dress'],
-  bottom: ['dress'],
+  dress: ['top', 'bottom', 'set'],
+  top: ['dress', 'set'],
+  bottom: ['dress', 'set'],
+  set: ['top', 'bottom', 'dress'], // 스페셜 세트는 상·하의·원피스를 대체
   hat: ['ears'],
   ears: ['hat'],
 };

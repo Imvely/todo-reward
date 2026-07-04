@@ -29,7 +29,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   top: '상의',
   bottom: '하의',
   dress: '원피스',
-  set: '셋업',
+  set: '스페셜 세트',
   socks: '양말',
   shoes: '신발',
   accessory: '액세서리',

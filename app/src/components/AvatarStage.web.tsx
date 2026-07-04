@@ -18,7 +18,7 @@ import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { makeEnvTexture } from './avatarEnvs.web';
-import { disposeProp, ENV_GRADIENTS, PROPS } from './avatarProps.web';
+import { COMBOS, disposeProp, ENV_GRADIENTS, PROPS, TINTABLE_PREFIXES } from './avatarProps.web';
 import type { WornItem } from './AvatarView';
 
 export type AvatarStageProps = {
@@ -56,9 +56,25 @@ function VrmModel({ items }: { items: WornItem[] }) {
     return vrm;
   }, [vrm]);
 
-  // 'prop:*' — 착용 변화에 따라 뼈에 프롭을 부착/해제 (§7.2)
+  // 착용 반영: prop(프롭) + combo(세트=프롭·리컬러·숨김 묶음) + tint(기본 옷 리컬러)
   useEffect(() => {
     const wanted = new Set(refsOf(items, 'prop:'));
+    const tints = new Map<string, number>(); // 머티리얼 프리픽스 → 색
+    const comboHides: string[] = [];
+    for (const it of items) {
+      const r = it.asset_ref;
+      if (!r) continue;
+      if (r.startsWith('combo:')) {
+        const c = COMBOS[r.slice(6)];
+        c?.props?.forEach((k) => wanted.add(k));
+        c?.tints?.forEach(([pre, hex]) => tints.set(pre, hex));
+        c?.hideMats?.forEach((h) => comboHides.push(h));
+      } else if (r.startsWith('tint:')) {
+        // 'tint:Tops:#ff5fa2' — 기본 의상/머리 리컬러 (몸에 딱 맞는 "다른 옷")
+        const [, pre, hex] = r.split(':');
+        if (pre && hex) tints.set(pre, parseInt(hex.replace('#', ''), 16));
+      }
+    }
     for (const [key, obj] of mounted.current) {
       if (!wanted.has(key)) {
         obj.parent?.remove(obj);
@@ -91,18 +107,45 @@ function VrmModel({ items }: { items: WornItem[] }) {
       mounted.current.set(key, holder);
     }
 
-    // 기본 의상 교체: 착용 프롭의 hideMats에 따라 VRM 의상 머티리얼을 숨긴다
-    // (예: 튜튜 착용 → 기본 반바지 'Bottoms_01_CLOTH' 숨김).
-    // combineSkeletons가 프리미티브를 병합해 material이 배열일 수 있으므로
-    // 메시가 아닌 "머티리얼 단위" visible로 제어한다 (_CLOTH만).
-    const hidePrefixes = [...wanted].flatMap((k) => PROPS[k]?.hideMats ?? []);
+    // 기본 의상 숨김(hideMats) + 리컬러(tint) — 머티리얼 단위 제어 (_CLOTH/_HAIR만).
+    // combineSkeletons가 프리미티브를 병합해 material이 배열일 수 있으므로 메시가 아닌
+    // 머티리얼 visible/color로 제어한다. 원래 색은 userData에 캐시해 벗으면 복원.
+    const hidePrefixes = [...wanted].flatMap((k) => PROPS[k]?.hideMats ?? []).concat(comboHides);
     vrm.scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       for (const m of mats) {
-        if (!m || typeof m.name !== 'string' || !m.name.includes('_CLOTH')) continue;
+        if (!m || typeof m.name !== 'string') continue;
+        if (!m.name.includes('_CLOTH') && !m.name.includes('_HAIR')) continue;
         m.visible = !hidePrefixes.some((h) => m.name.startsWith(h));
+        // 리컬러: MToon color 교체 (원본 캐시 후, 착용 틴트 적용 / 없으면 복원)
+        const mc = m as THREE.Material & {
+          color?: THREE.Color;
+          map?: THREE.Texture | null;
+          userData: Record<string, unknown>;
+        };
+        if (!mc.color) continue;
+        if (mc.userData.__origColor === undefined) {
+          mc.userData.__origColor = mc.color.getHex();
+          mc.userData.__origMap = mc.map ?? null;
+        }
+        const pre = TINTABLE_PREFIXES.find((tp) => m.name.startsWith(tp));
+        const tint = pre ? tints.get(pre) : undefined;
+        if (tint !== undefined) {
+          mc.color.setHex(tint);
+          // 원단 텍스처가 어두우면 색 곱셈이 안 먹는다 → 틴트 중엔 단색 원단으로
+          if (mc.map) {
+            mc.map = null;
+            mc.needsUpdate = true;
+          }
+        } else {
+          mc.color.setHex(mc.userData.__origColor as number);
+          if (mc.map !== (mc.userData.__origMap as THREE.Texture | null)) {
+            mc.map = mc.userData.__origMap as THREE.Texture | null;
+            mc.needsUpdate = true;
+          }
+        }
       }
     });
   }, [items, vrm]);

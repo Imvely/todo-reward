@@ -78,9 +78,10 @@ def purchase_item(db: Session, user: User, item_id: uuid.UUID) -> PurchaseResult
 # 동시 착용 불가 조합 (docs/research/item-catalog-plan.md).
 # 원피스↔상·하의, 안경↔선글라스(눈), 모자↔동물귀(정수리) — 같은 부위는 자동 교체.
 _CONFLICTS: dict[str, tuple[str, ...]] = {
-    "dress": ("top", "bottom"),
-    "top": ("dress",),
-    "bottom": ("dress",),
+    "dress": ("top", "bottom", "set"),
+    "top": ("dress", "set"),
+    "bottom": ("dress", "set"),
+    "set": ("top", "bottom", "dress"),  # 스페셜 세트는 상·하의·원피스를 대체
     "hat": ("ears",),
     "ears": ("hat",),
 }

@@ -215,6 +215,113 @@ export const PROPS: Record<string, PropDef> = {
     build: () =>
       g(at(M.torus(0.055, 0.034, C.red), 0, -0.012, 0.028, Math.PI / 2.05), at(M.box(0.055, 0.15, 0.03, C.red), 0.032, -0.1, 0.07, 0.15, 0, 0.1)),
   },
+  // ── 코스튬 헬멧/후드 (head — hideMats로 머리카락을 숨겨 깔끔하게) ──
+  dino_hood: {
+    bone: 'head',
+    hideMats: ['Hair'],
+    build: () => {
+      const green = 0x66c26e;
+      const grp = g(
+        M.halfSphere(0.135, green),
+        // 등쪽 스파이크
+        at(M.cone(0.02, 0.045, 0x3fae6a), 0, 0.1, -0.06, -0.5),
+        at(M.cone(0.024, 0.05, 0x3fae6a), 0, 0.115, 0),
+        at(M.cone(0.02, 0.045, 0x3fae6a), 0, 0.1, 0.055, 0.4),
+        // 후드 눈
+        at(M.sphere(0.028, C.white), -0.055, 0.06, 0.085),
+        at(M.sphere(0.028, C.white), 0.055, 0.06, 0.085),
+        at(M.sphere(0.013, C.dark), -0.055, 0.062, 0.108),
+        at(M.sphere(0.013, C.dark), 0.055, 0.062, 0.108),
+      );
+      return at(grp, 0, 0.095, 0);
+    },
+  },
+  dino_tail: {
+    bone: 'hips',
+    build: () =>
+      at(g(
+        at(M.cone(0.05, 0.2, 0x66c26e), 0, 0, 0, -2.1),
+        at(M.cone(0.036, 0.16, 0x66c26e), 0, -0.045, -0.13, -1.75),
+        at(M.cone(0.022, 0.12, 0x3fae6a), 0, -0.06, -0.24, -1.55),
+      ), 0, -0.03, -0.1),
+  },
+  witch_hat: {
+    bone: 'head',
+    build: () => {
+      const purple = 0x6b4fa0;
+      return at(g(
+        at(M.cone(0.085, 0.22, purple), 0, 0.1, 0, 0, 0, -0.12),
+        M.cylinder(0.15, 0.155, 0.012, purple),
+        at(M.torus(0.086, 0.014, C.gold), 0, 0.02, 0, Math.PI / 2),
+      ), 0, 0.15, 0);
+    },
+  },
+  robot_helm: {
+    bone: 'head',
+    hideMats: ['Hair'],
+    build: () =>
+      at(g(
+        M.halfSphere(0.13, C.red),
+        at(M.cylinder(0.131, 0.131, 0.07, C.red), 0, -0.03, 0),
+        // 금색 페이스 플레이트 + 시안 바이저
+        at(M.box(0.14, 0.075, 0.02, C.gold), 0, -0.02, 0.108),
+        at(new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.02, 0.012), mat(0x7ff0ff, { emissive: 0x3fd6f0, emissiveIntensity: 0.9 })), 0, -0.005, 0.12),
+        at(M.sphere(0.016, C.gold), 0, 0.125, 0),
+      ), 0, 0.075, 0),
+  },
+  spider_mask: {
+    bone: 'head',
+    hideMats: ['Hair'],
+    build: () => {
+      const eye = (sx: number) => {
+        const e = M.sphere(0.038, C.white, { roughness: 0.25 });
+        e.scale.set(1, 1.25, 0.5);
+        e.position.set(sx, -0.01, 0.1);
+        e.rotation.z = sx > 0 ? -0.25 : 0.25;
+        return e;
+      };
+      return at(g(
+        M.halfSphere(0.13, C.red),
+        at(M.cylinder(0.131, 0.131, 0.08, C.red), 0, -0.035, 0),
+        eye(-0.052),
+        eye(0.052),
+      ), 0, 0.075, 0);
+    },
+  },
+  angel_wings: {
+    bone: 'chest',
+    build: () => {
+      const wing = (sx: number) => {
+        const w = g(
+          at(M.sphere(0.14, C.white, { roughness: 0.85 }), sx * 0.16, 0.05, 0),
+          at(M.sphere(0.1, C.white, { roughness: 0.85 }), sx * 0.26, -0.04, 0),
+          at(M.sphere(0.065, C.white, { roughness: 0.85 }), sx * 0.33, -0.13, 0),
+        );
+        w.scale.z = 0.28;
+        w.rotation.z = sx * 0.35;
+        return w;
+      };
+      return at(g(wing(-1), wing(1)), 0, 0.05, -0.11);
+    },
+  },
+  butterfly_wings: {
+    bone: 'chest',
+    build: () => {
+      const wing = (sx: number, sy: number, r: number, color: number) => {
+        const m = M.sphere(r, color, { transparent: true, opacity: 0.85, roughness: 0.4 });
+        m.scale.set(1, 1.25, 0.12);
+        m.position.set(sx, sy, -0.1);
+        m.rotation.z = sx > 0 ? -0.4 : 0.4;
+        return m;
+      };
+      return g(
+        wing(-0.14, 0.08, 0.12, 0xff8fbe),
+        wing(0.14, 0.08, 0.12, 0xff8fbe),
+        wing(-0.11, -0.08, 0.085, 0xc9a8ff),
+        wing(0.11, -0.08, 0.085, 0xc9a8ff),
+      );
+    },
+  },
   // ── 바닥 (world) ──
   flower_rug: {
     bone: 'world',
@@ -243,6 +350,47 @@ export function disposeProp(obj: THREE.Object3D): void {
     else m?.dispose();
   });
 }
+
+/** 리컬러(틴트) 가능한 VRM 머티리얼 프리픽스 — 상의/하의/신발/머리카락 */
+export const TINTABLE_PREFIXES = ['Tops', 'Bottoms', 'Shoes', 'Hair'] as const;
+
+/** 스페셜 수트 콤보 — asset_ref 'combo:*' = 프롭 + 리컬러 + 숨김을 한 번에 (세트 착용) */
+export type ComboDef = {
+  props?: string[];
+  tints?: [string, number][]; // [머티리얼 프리픽스, 색]
+  hideMats?: string[];
+};
+export const COMBOS: Record<string, ComboDef> = {
+  dino: {
+    props: ['dino_hood', 'dino_tail'],
+    tints: [['Tops', 0x77c97e], ['Bottoms', 0x5bb46a], ['Shoes', 0x4a9e59]],
+  },
+  witch: {
+    props: ['witch_hat', 'wand'],
+    tints: [['Tops', 0x453a5c], ['Bottoms', 0x6b4fa0], ['Shoes', 0x2a2438]],
+  },
+  robot_hero: {
+    props: ['robot_helm'],
+    tints: [['Tops', 0xd94848], ['Bottoms', 0xb93a3a], ['Shoes', 0xffd34d]],
+  },
+  spider_hero: {
+    props: ['spider_mask'],
+    tints: [['Tops', 0xe23c3c], ['Bottoms', 0x2e5fd0], ['Shoes', 0xe23c3c]],
+  },
+  angel: {
+    props: ['halo', 'angel_wings'],
+    tints: [['Tops', 0xffffff], ['Bottoms', 0xfff3dc], ['Shoes', 0xffffff]],
+  },
+  royal: {
+    props: ['crown', 'cape'],
+    tints: [['Tops', 0xffd34d], ['Bottoms', 0x6b4fa0], ['Shoes', 0xffd34d]],
+  },
+  ballerina: {
+    props: ['tutu'],
+    tints: [['Tops', 0xffb3d1], ['Shoes', 0xffb3d1]],
+    hideMats: ['Bottoms_01'],
+  },
+};
 
 /** 무대 배경 프리셋 — asset_ref 'env:*' (배경 아이템) */
 export const ENV_GRADIENTS: Record<string, string> = {
