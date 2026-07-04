@@ -177,7 +177,8 @@ export function ShopScreen({ onBack }: { onBack: () => void }) {
 
         {/* ★ 고정 캐릭터 무대 — 트레이를 스크롤해도 항상 보인다 */}
         <View style={styles.stage}>
-          <AvatarStage items={wornItems} height={264} />
+          {/* 전신(신발까지) 보이도록 세로 넉넉히 — 휠 확대 + 드래그 이동으로 디테일 확인 */}
+          <AvatarStage items={wornItems} height={348} />
         </View>
 
         {/* 카테고리 칩 — 가로 스크롤은 웹에서 가려지므로 전부 줄바꿈 표시 */}

@@ -90,23 +90,23 @@ export const PROPS: Record<string, PropDef> = {
   round_glasses: {
     bone: 'head',
     build: () =>
-      at(g(at(M.torus(0.03, 0.0035, C.dark), -0.04, 0, 0), at(M.torus(0.03, 0.0035, C.dark), 0.04, 0, 0), at(M.box(0.022, 0.004, 0.004, C.dark), 0, 0.008, 0)), 0, 0.066, 0.118),
+      at(g(at(M.torus(0.03, 0.0035, C.dark), -0.04, 0, 0), at(M.torus(0.03, 0.0035, C.dark), 0.04, 0, 0), at(M.box(0.022, 0.004, 0.004, C.dark), 0, 0.008, 0)), 0, 0.045, 0.118),
   },
   goggles: {
     bone: 'head',
     build: () =>
-      at(g(at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), 0.04, 0, 0, Math.PI / 2), at(M.box(0.16, 0.014, 0.006, C.mint), 0, 0, -0.004)), 0, 0.07, 0.116),
+      at(g(at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.032, 0.032, 0.008, C.sky, { transparent: true, opacity: 0.75 }), 0.04, 0, 0, Math.PI / 2), at(M.box(0.16, 0.014, 0.006, C.mint), 0, 0, -0.004)), 0, 0.05, 0.116),
   },
   sunglasses: {
     bone: 'head',
     build: () =>
-      at(g(at(M.cylinder(0.03, 0.03, 0.006, C.dark), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.03, 0.03, 0.006, C.dark), 0.04, 0, 0, Math.PI / 2), at(M.box(0.024, 0.005, 0.005, C.dark), 0, 0.01, 0)), 0, 0.066, 0.12),
+      at(g(at(M.cylinder(0.03, 0.03, 0.006, C.dark), -0.04, 0, 0, Math.PI / 2), at(M.cylinder(0.03, 0.03, 0.006, C.dark), 0.04, 0, 0, Math.PI / 2), at(M.box(0.024, 0.005, 0.005, C.dark), 0, 0.01, 0)), 0, 0.045, 0.12),
   },
   // ── 동물 귀 (head) ──
   cat_ears: {
     bone: 'head',
     build: () =>
-      at(g(at(M.cone(0.034, 0.065, C.brown), -0.058, 0, 0, 0, 0, 0.25), at(M.cone(0.034, 0.065, C.brown), 0.058, 0, 0, 0, 0, -0.25), at(M.cone(0.018, 0.035, C.softPink), -0.055, -0.002, 0.012, 0, 0, 0.25), at(M.cone(0.018, 0.035, C.softPink), 0.055, -0.002, 0.012, 0, 0, -0.25)), 0, 0.16, 0),
+      at(g(at(M.cone(0.048, 0.1, C.brown), -0.062, 0, 0, 0, 0, 0.28), at(M.cone(0.048, 0.1, C.brown), 0.062, 0, 0, 0, 0, -0.28), at(M.cone(0.026, 0.055, C.softPink), -0.058, -0.004, 0.022, 0, 0, 0.28), at(M.cone(0.026, 0.055, C.softPink), 0.058, -0.004, 0.022, 0, 0, -0.28)), 0, 0.205, 0),
   },
   rabbit_ears: {
     bone: 'head',
@@ -144,14 +144,14 @@ export const PROPS: Record<string, PropDef> = {
   pearl_necklace: {
     bone: 'neck',
     build: () => {
-      const pearls = Array.from({ length: 11 }, (_, i) => at(M.sphere(0.014, 0xffc9dd, { emissive: 0xff8fbe, emissiveIntensity: 0.35, roughness: 0.3 }), Math.cos((i * 2 * Math.PI) / 11) * 0.062, -0.06 - Math.abs(Math.sin((i * Math.PI) / 11)) * 0.015, Math.sin((i * 2 * Math.PI) / 11) * 0.05 + 0.055));
+      const pearls = Array.from({ length: 11 }, (_, i) => { const a = (i * 2 * Math.PI) / 11; const front = (Math.sin(a) + 1) / 2; return at(M.sphere(0.016, 0xffb7d3, { emissive: 0xff5fa2, emissiveIntensity: 0.5, roughness: 0.25 }), Math.cos(a) * 0.06, -0.05 - front * 0.055, Math.sin(a) * 0.045 + 0.055); });
       return g(...pearls);
     },
   },
   diamond_necklace: {
     bone: 'neck',
     build: () =>
-      g(at(M.torus(0.06, 0.006, 0x8a8f98), 0, -0.05, 0.05, Math.PI / 2.2), at(M.octa(0.026, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.8, roughness: 0.2 }), 0, -0.11, 0.1)),
+      g(at(M.torus(0.058, 0.007, 0x6f7580), 0, -0.055, 0.05, Math.PI / 1.75), at(M.octa(0.028, C.sky, { emissive: 0x5fb8ff, emissiveIntensity: 0.9, roughness: 0.2 }), 0, -0.125, 0.095)),
   },
   // ── 손에 드는 것 ──
   wand: {
@@ -201,7 +201,7 @@ export const PROPS: Record<string, PropDef> = {
   scarf: {
     bone: 'neck',
     build: () =>
-      g(at(M.torus(0.066, 0.028, C.red), 0, -0.04, 0.045, Math.PI / 2.1), at(M.box(0.052, 0.16, 0.026, C.red), 0.035, -0.13, 0.105, 0, 0, 0.12)),
+      g(at(M.torus(0.055, 0.034, C.red), 0, -0.012, 0.028, Math.PI / 2.05), at(M.box(0.055, 0.15, 0.03, C.red), 0.032, -0.1, 0.07, 0.15, 0, 0.1)),
   },
   // ── 바닥 (world) ──
   flower_rug: {

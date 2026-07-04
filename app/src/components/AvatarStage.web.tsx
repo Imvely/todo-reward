@@ -120,7 +120,7 @@ function VrmModel({ items }: { items: WornItem[] }) {
   return <primitive object={vrm.scene} />;
 }
 
-/** 배경 아이템 전용 데코 — "배경 = 그라데이션 + 파티클 + 소품" 세트로 값어치 있게. */
+/** 배경 아이템 전용 데코 — 그라데이션 + 파티클 + 소품 + 모션까지 한 세트. */
 function EnvDecor({ envKey }: { envKey: string }) {
   const std = (color: number, opts: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...opts });
@@ -135,16 +135,57 @@ function EnvDecor({ envKey }: { envKey: string }) {
       );
       moon.position.set(-0.72, 1.95, -1.1);
       grp.add(moon);
+      // 별똥별 2개 — 대각선으로 떨어지며 반복
+      for (let i = 0; i < 2; i++) {
+        const shoot = new THREE.Group();
+        const headM = new THREE.Mesh(
+          new THREE.SphereGeometry(0.02, 10, 8),
+          std(0xffffff, { emissive: 0xfff2b8, emissiveIntensity: 1 }),
+        );
+        const trail = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.004, 0.012, 0.34, 8),
+          new THREE.MeshBasicMaterial({ color: 0xfff2b8, transparent: true, opacity: 0.6 }),
+        );
+        trail.position.set(0.12, 0.12, 0);
+        trail.rotation.z = Math.PI / 4;
+        shoot.add(headM, trail);
+        shoot.userData.anim = { type: 'shoot', phase: i * 0.55 };
+        grp.add(shoot);
+      }
+      // 폭죽 — 중심에서 방사형으로 퍼졌다 사라지는 불꽃 12발 × 2군데
+      [
+        [0.75, 1.75, -1.2, 0xff8fbe],
+        [-0.35, 2.05, -1.3, 0xffd34d],
+      ].forEach(([x, y, z, color], k) => {
+        const burst = new THREE.Group();
+        for (let i = 0; i < 12; i++) {
+          const a = (i * 2 * Math.PI) / 12;
+          const sparkM = new THREE.Mesh(
+            new THREE.SphereGeometry(0.016, 8, 6),
+            new THREE.MeshBasicMaterial({ color: color as number, transparent: true }),
+          );
+          sparkM.userData.dir = [Math.cos(a), Math.sin(a)];
+          burst.add(sparkM);
+        }
+        burst.position.set(x as number, y as number, z as number);
+        burst.userData.anim = { type: 'burst', phase: k * 0.5 };
+        grp.add(burst);
+      });
     } else if (envKey === 'space') {
-      // 고리 행성
       const planet = new THREE.Mesh(new THREE.SphereGeometry(0.13, 24, 16), std(0xb9a0ff, { emissive: 0x6a4fd0, emissiveIntensity: 0.5 }));
       planet.position.set(0.72, 1.85, -1.2);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 10, 40), std(0xffd34d, { emissive: 0xcfa32e, emissiveIntensity: 0.5 }));
       ring.position.copy(planet.position);
       ring.rotation.x = Math.PI / 2.6;
-      grp.add(planet, ring);
+      // 로켓 궤도 — 행성 주위를 도는 미니 로켓(캡슐+콘)
+      const rocket = new THREE.Group();
+      const bodyM = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.05, 4, 10), std(0xffffff));
+      const noseM = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.035, 10), std(0xff6b6b));
+      noseM.position.y = 0.055;
+      rocket.add(bodyM, noseM);
+      rocket.userData.anim = { type: 'orbit', cx: 0.72, cy: 1.85, cz: -1.2, r: 0.42 };
+      grp.add(planet, ring, rocket);
     } else if (envKey === 'xmas') {
-      // 트리 (3단 콘 + 별)
       const tree = new THREE.Group();
       const green = 0x2f9e5f;
       [
@@ -160,27 +201,141 @@ function EnvDecor({ envKey }: { envKey: string }) {
       trunk.position.y = 0.1;
       const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), std(0xffd34d, { emissive: 0xcfa32e, emissiveIntensity: 0.8 }));
       star.position.y = 1.03;
+      star.userData.anim = { type: 'spinY' };
+      // 트리 방울 장식
+      [0xff6b6b, 0xffd34d, 0x9ad8ff, 0xff8fbe].forEach((c2, i) => {
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 8), std(c2, { emissive: c2, emissiveIntensity: 0.35 }));
+        const a = i * 1.7;
+        ball.position.set(Math.cos(a) * 0.18, 0.42 + i * 0.14, Math.sin(a) * 0.14 + 0.08);
+        tree.add(ball);
+      });
       tree.add(trunk, star);
       tree.position.set(-0.8, 0, -0.9);
+      // 선물 상자 2개
+      [
+        [0xff8fbe, -0.5, 0.06, -0.75, 0.12],
+        [0x9ad8ff, -1.05, 0.05, -0.7, 0.1],
+      ].forEach(([c3, x, y, z, sz]) => {
+        const gift = new THREE.Mesh(new THREE.BoxGeometry(sz as number, sz as number, sz as number), std(c3 as number));
+        gift.position.set(x as number, y as number, z as number);
+        grp.add(gift);
+      });
       grp.add(tree);
     } else if (envKey === 'rainbow') {
-      // 무지개 아치 (반원 토러스 3겹)
       [0xff8fa9, 0xffdf6b, 0x8fe3c0].forEach((color, i) => {
         const arc = new THREE.Mesh(new THREE.TorusGeometry(1.05 + i * 0.09, 0.035, 10, 48, Math.PI), std(color, { emissive: color, emissiveIntensity: 0.25 }));
         arc.position.set(0, 0.25, -1.3);
         grp.add(arc);
       });
+      // 아치 양끝 구름
+      [-1.1, 1.1].forEach((x) => {
+        const cloud = new THREE.Group();
+        [
+          [0, 0, 0, 0.14],
+          [-0.12, -0.02, 0.02, 0.1],
+          [0.12, -0.02, 0.02, 0.1],
+        ].forEach(([cx, cy, cz, r]) => {
+          const m = new THREE.Mesh(new THREE.SphereGeometry(r as number, 14, 10), std(0xffffff, { roughness: 0.9 }));
+          m.position.set(cx as number, cy as number, cz as number);
+          cloud.add(m);
+        });
+        cloud.position.set(x, 0.3, -1.25);
+        cloud.userData.anim = { type: 'bob' };
+        grp.add(cloud);
+      });
     } else if (envKey === 'ocean') {
-      // 물빛 바닥
-      const water = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.3, 1.3, 0.01, 40),
-        std(0x9ad8ff, { transparent: true, opacity: 0.45, roughness: 0.2 }),
-      );
-      water.position.y = 0.004;
-      grp.add(water);
+      // 모래사장
+      const sand = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.012, 44), std(0xf2dcae, { roughness: 0.95 }));
+      sand.position.y = 0.002;
+      grp.add(sand);
+      // 야자수 — 기울어진 줄기 + 잎 6장 + 코코넛
+      const palm = new THREE.Group();
+      for (let i = 0; i < 4; i++) {
+        const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.035 - i * 0.004, 0.042 - i * 0.004, 0.3, 10), std(0xb9825a));
+        seg.position.set(i * 0.05, 0.15 + i * 0.28, 0);
+        seg.rotation.z = -0.18;
+        palm.add(seg);
+      }
+      for (let i = 0; i < 6; i++) {
+        const a = (i * 2 * Math.PI) / 6;
+        const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.5, 6), std(0x3fae6a));
+        leaf.position.set(0.2 + Math.cos(a) * 0.22, 1.28, Math.sin(a) * 0.22);
+        leaf.rotation.set(Math.sin(a) * 1.25, 0, Math.PI / 2.2 + Math.cos(a) * 1.25);
+        leaf.userData.anim = { type: 'sway', phase: i };
+        palm.add(leaf);
+      }
+      [[-0.03, 0.05], [0.06, -0.04]].forEach(([dx, dz]) => {
+        const coco = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), std(0x8a5a3a));
+        coco.position.set(0.2 + (dx as number), 1.16, dz as number);
+        palm.add(coco);
+      });
+      palm.position.set(0.85, 0, -0.75);
+      grp.add(palm);
+      // 파도 — 해변으로 밀려오는 반투명 물결 2겹 (애니메이션)
+      for (let i = 0; i < 2; i++) {
+        const wave = new THREE.Mesh(
+          new THREE.CylinderGeometry(1.15, 1.15, 0.014, 44, 1, false),
+          new THREE.MeshStandardMaterial({ color: 0x7fd1ff, transparent: true, opacity: 0.4, roughness: 0.15 }),
+        );
+        wave.position.set(0, 0.012 + i * 0.006, -0.55);
+        wave.userData.anim = { type: 'wave', phase: i * 0.5 };
+        grp.add(wave);
+      }
     }
     return grp;
   }, [envKey]);
+
+  // 데코 모션: 별똥별/폭죽/파도/야자잎/구름/궤도
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    decor.traverse((o) => {
+      const anim = o.userData.anim as { type: string; phase?: number; cx?: number; cy?: number; cz?: number; r?: number } | undefined;
+      if (!anim) return;
+      if (anim.type === 'shoot') {
+        const cycle = 3.2;
+        const k = ((t + (anim.phase ?? 0) * cycle) % cycle) / cycle;
+        o.position.set(-1.3 + k * 2.1, 2.25 - k * 0.85, -1.35);
+        const fade = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25;
+        o.traverse((c) => {
+          const m = (c as THREE.Mesh).material as THREE.Material & { opacity?: number };
+          if (m) {
+            m.transparent = true;
+            m.opacity = fade * ((c as THREE.Mesh).geometry?.type === 'CylinderGeometry' ? 0.55 : 1);
+          }
+        });
+      } else if (anim.type === 'burst') {
+        const cycle = 2.6;
+        const k = ((t + (anim.phase ?? 0) * cycle) % cycle) / cycle;
+        const grow = Math.min(1, k * 2.2);
+        const fade = k < 0.45 ? 1 : Math.max(0, 1 - (k - 0.45) / 0.4);
+        o.children.forEach((spark) => {
+          const dir = spark.userData.dir as [number, number];
+          spark.position.set(dir[0] * grow * 0.3, dir[1] * grow * 0.3, 0);
+          const m = (spark as THREE.Mesh).material as THREE.Material & { opacity?: number };
+          if (m) m.opacity = fade;
+        });
+      } else if (anim.type === 'wave') {
+        const k = (Math.sin(t * 0.9 + (anim.phase ?? 0) * Math.PI * 2) + 1) / 2;
+        o.position.z = -0.75 + k * 0.45; // 해변으로 밀려왔다 빠짐
+        const m = (o as THREE.Mesh).material as THREE.Material & { opacity?: number };
+        if (m) m.opacity = 0.18 + (1 - k) * 0.3;
+      } else if (anim.type === 'sway') {
+        o.rotation.y = Math.sin(t * 1.6 + (anim.phase ?? 0)) * 0.08;
+      } else if (anim.type === 'bob') {
+        o.position.y = 0.3 + Math.sin(t * 1.1 + o.position.x) * 0.03;
+      } else if (anim.type === 'spinY') {
+        o.rotation.y = t * 1.2;
+      } else if (anim.type === 'orbit') {
+        const a = t * 0.7;
+        o.position.set(
+          (anim.cx ?? 0) + Math.cos(a) * (anim.r ?? 0.4),
+          (anim.cy ?? 0) + Math.sin(a) * 0.12,
+          (anim.cz ?? 0) + Math.sin(a) * 0.2,
+        );
+        o.rotation.z = -a - Math.PI / 2;
+      }
+    });
+  });
 
   return (
     <>
@@ -224,7 +379,7 @@ export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) 
         // 캡처("이미지로 저장")를 위해 드로잉 버퍼 보존
         gl={{ preserveDrawingBuffer: true, alpha: true }}
         // 머리 위(모자·천사링)와 발치(펫·바닥)까지 여유 있게 잡는 프레이밍
-        camera={{ position: [0, 1.0, 2.45], fov: 35 }}
+        camera={{ position: [0, 0.95, 2.8], fov: 36 }}
         onCreated={({ gl }) => {
           onReady?.(() => {
             try {
@@ -252,14 +407,17 @@ export function AvatarStage({ items, height = 460, onReady }: AvatarStageProps) 
         ) : null}
         {/* 발밑 부드러운 그림자 — 붕 뜬 느낌 제거 */}
         <ContactShadows position={[0, 0.01, 0]} opacity={0.32} scale={2.6} blur={2.6} far={0.9} />
-        {/* 수평 회전 중심을 몸통(y≈0.9)에 두고, 위아래·줌은 제한 */}
+        {/* 회전 + 확대(0.6까지 클로즈업) + 위아래 이동(드래그 두 손가락/우클릭)으로
+            얼굴·신발 디테일까지 볼 수 있다 */}
         <OrbitControls
-          target={[0, 0.9, 0]}
-          enablePan={false}
-          minDistance={1.4}
-          maxDistance={3.2}
-          minPolarAngle={Math.PI / 2.7}
-          maxPolarAngle={Math.PI / 1.85}
+          target={[0, 0.85, 0]}
+          enablePan
+          screenSpacePanning
+          panSpeed={0.8}
+          minDistance={0.6}
+          maxDistance={3.4}
+          minPolarAngle={Math.PI / 3.2}
+          maxPolarAngle={Math.PI / 1.75}
         />
       </Canvas>
     </View>
